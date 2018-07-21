@@ -50,7 +50,7 @@ public:
 
 		if(platformIndex == -1)
 		{
-			printer::inst()->print_msg(L0,"WARNING: No AMD OpenCL platform found. Possible driver issues or wrong vendor driver.");
+			printer::inst()->print_backend_msg("OpenCL", L0,"WARNING: No AMD platform found. Possible driver issues or wrong vendor driver.");
 			return false;
 		}
 
@@ -61,7 +61,7 @@ public:
 
 		if(deviceCount == 0)
 		{
-			printer::inst()->print_msg(L0,"WARNING: No AMD device found.");
+			printer::inst()->print_backend_msg("OpenCL", L0,"WARNING: No AMD device found.");
 			return false;
 		}
 
@@ -142,7 +142,7 @@ private:
 			//If the intensity is 0, then it's because the multiple of the unit count is greater than intensity
 			if (intensity == 0)
 			{
-				printer::inst()->print_msg(L0, "WARNING: Auto detected intensity unexpectedly low. Try to set the environment variable GPU_SINGLE_ALLOC_PERCENT.");
+				printer::inst()->print_backend_msg("OpenCL", L0, "WARNING: Auto detected intensity unexpectedly low. Try to set the environment variable GPU_SINGLE_ALLOC_PERCENT.");
 				intensity = possibleIntensity;
 
 			}
@@ -159,7 +159,7 @@ private:
 			}
 			else
 			{
-				printer::inst()->print_msg(L0, "WARNING: Ignore gpu %s, %s MiB free memory is not enough to suggest settings.", ctx.name.c_str(), std::to_string(availableMem / byteToMiB).c_str());
+				printer::inst()->print_backend_msg("OpenCL", L0, "WARNING: Ignore gpu %s, %s MiB free memory is not enough to suggest settings.", ctx.name.c_str(), std::to_string(availableMem / byteToMiB).c_str());
 			}
 		}
 
@@ -168,7 +168,7 @@ private:
 		configTpl.write(params::inst().configFileAMD);
 
 		const std::string backendName = xmrstak::params::inst().openCLVendor;
-		printer::inst()->print_msg(L0, "%s: GPU (OpenCL) configuration stored in file '%s'", backendName.c_str(), params::inst().configFileAMD.c_str());
+		printer::inst()->print_backend_msg("OpenCL", L0, "%s: GPU configuration stored in file '%s'", backendName.c_str(), params::inst().configFileAMD.c_str());
 	}
 
 	std::vector<GpuContext> devVec;

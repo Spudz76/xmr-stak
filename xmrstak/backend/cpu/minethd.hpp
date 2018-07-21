@@ -11,6 +11,7 @@
 #include <atomic>
 #include <future>
 
+
 namespace xmrstak
 {
 namespace cpu
@@ -19,7 +20,8 @@ namespace cpu
 class minethd : public iBackend
 {
 public:
-	static std::vector<iBackend*> thread_starter(uint32_t threadOffset, miner_work& pWork);
+
+	static std::vector<iBackend*>* thread_starter(uint32_t threadOffset, miner_work& pWork);
 	static bool self_test();
 
 	typedef void (*cn_hash_fun)(const void*, size_t, void*, cryptonight_ctx*);

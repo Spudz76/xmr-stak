@@ -70,6 +70,12 @@ namespace xmrstak
 namespace cpu
 {
 
+#ifdef WIN32
+	HINSTANCE lib_handle;
+#else
+	void *lib_handle;
+#endif
+
 bool minethd::thd_setaffinity(std::thread::native_handle_type h, uint64_t cpu_id)
 {
 #if defined(_WIN32)
@@ -80,7 +86,7 @@ bool minethd::thd_setaffinity(std::thread::native_handle_type h, uint64_t cpu_id
 	}
 	else
 	{
-		printer::inst()->print_msg(L0, "WARNING: Windows supports only affinity up to 63.");
+		printer::inst()->print_backend_msg("CPU", L0, "WARNING: Windows supports only affinity up to 63.");
 		return false;
 	}
 #elif defined(__APPLE__)
@@ -94,7 +100,7 @@ bool minethd::thd_setaffinity(std::thread::native_handle_type h, uint64_t cpu_id
 	CPU_SET(cpu_id, &mn);
 	return pthread_setaffinity_np(h, sizeof(cpuset_t), &mn) == 0;
 #elif defined(__OpenBSD__)
-        printer::inst()->print_msg(L0,"WARNING: thread pinning is not supported under OPENBSD.");
+        printer::inst()->print_backend_msg("CPU", L0,"WARNING: thread pinning is not supported under OPENBSD.");
         return true;
 #else
 	cpu_set_t mn;
@@ -141,7 +147,7 @@ minethd::minethd(miner_work& pWork, size_t iNo, int iMultiway, bool no_prefetch,
 
 	if(affinity >= 0) //-1 means no affinity
 		if(!thd_setaffinity(oWorkThd.native_handle(), affinity))
-			printer::inst()->print_msg(L1, "WARNING setting affinity failed.");
+			printer::inst()->print_backend_msg("CPU", L1, "WARNING setting affinity failed.");
 }
 
 cryptonight_ctx* minethd::minethd_alloc_ctx()
@@ -154,19 +160,19 @@ cryptonight_ctx* minethd::minethd_alloc_ctx()
 	case ::jconf::never_use:
 		ctx = cryptonight_alloc_ctx(1, 1, &msg);
 		if (ctx == NULL)
-			printer::inst()->print_msg(L0, "MEMORY ALLOC FAILED: %s", msg.warning);
+			printer::inst()->print_backend_msg("CPU", L0, "MEMORY ALLOC FAILED: %s", msg.warning);
 		return ctx;
 
 	case ::jconf::no_mlck:
 		ctx = cryptonight_alloc_ctx(1, 0, &msg);
 		if (ctx == NULL)
-			printer::inst()->print_msg(L0, "MEMORY ALLOC FAILED: %s", msg.warning);
+			printer::inst()->print_backend_msg("CPU", L0, "MEMORY ALLOC FAILED: %s", msg.warning);
 		return ctx;
 
 	case ::jconf::print_warning:
 		ctx = cryptonight_alloc_ctx(1, 1, &msg);
 		if (msg.warning != NULL)
-			printer::inst()->print_msg(L0, "MEMORY ALLOC FAILED: %s", msg.warning);
+			printer::inst()->print_backend_msg("CPU", L0, "MEMORY ALLOC FAILED: %s", msg.warning);
 		if (ctx == NULL)
 			ctx = cryptonight_alloc_ctx(0, 0, NULL);
 		return ctx;
@@ -214,7 +220,7 @@ bool minethd::self_test()
 	}
 
 	if(msg.warning != nullptr)
-		printer::inst()->print_msg(L0, "MEMORY INIT ERROR: %s", msg.warning);
+		printer::inst()->print_backend_msg("CPU", L0, "MEMORY INIT ERROR: %s", msg.warning);
 
 	if(res == 0 && fatal)
 		return false;
@@ -315,16 +321,38 @@ bool minethd::self_test()
 		cryptonight_free_ctx(ctx[i]);
 
 	if(!bResult)
-		printer::inst()->print_msg(L0,
+		printer::inst()->print_backend_msg("CPU", L0,
 			"Cryptonight hash self-test failed. This might be caused by bad compiler optimizations.");
 
 	return bResult;
 }
 
-std::vector<iBackend*> minethd::thread_starter(uint32_t threadOffset, miner_work& pWork)
+extern "C"
 {
-	std::vector<iBackend*> pvThreads;
+#ifdef WIN32
+__declspec(dllexport)
+#endif
+bool xmrstak_test_backend(environment& env)
+{
+	environment::inst(&env);
+	return cpu::minethd::self_test();
+}
+#ifdef WIN32
+__declspec(dllexport)
+#endif
+std::vector<iBackend*>* xmrstak_start_backend(uint32_t threadOffset, miner_work& pWork, environment& env)
+{
+	environment::inst(&env);
+	return cpu::minethd::thread_starter(threadOffset, pWork);
+}
+} // extern "C"
 
+std::vector<iBackend*>* minethd::thread_starter(uint32_t threadOffset, miner_work& pWork)
+{
+	std::vector<iBackend*>* pvThreads = new std::vector<iBackend*>();
+
+	if(!::jconf::inst()->HaveHardwareAes())
+		printer::inst()->print_backend_msg("CPU", L0, "Your CPU doesn't support hardware AES. Don't expect high hashrates.");
 	if(!configEditor::file_exist(params::inst().configFileCPU))
 	{
 		autoAdjust adjust;
@@ -341,7 +369,7 @@ std::vector<iBackend*> minethd::thread_starter(uint32_t threadOffset, miner_work
 	//Launch the requested number of single and double threads, to distribute
 	//load evenly we need to alternate single and double threads
 	size_t i, n = jconf::inst()->GetThreadCount();
-	pvThreads.reserve(n);
+	pvThreads->reserve(n);
 
 	jconf::thd_cfg cfg;
 	for (i = 0; i < n; i++)
@@ -351,16 +379,16 @@ std::vector<iBackend*> minethd::thread_starter(uint32_t threadOffset, miner_work
 		if(cfg.iCpuAff >= 0)
 		{
 #if defined(__APPLE__)
-			printer::inst()->print_msg(L1, "WARNING on macOS thread affinity is only advisory.");
+			printer::inst()->print_backend_msg("CPU", L1, "WARNING on macOS thread affinity is only advisory.");
 #endif
 
-			printer::inst()->print_msg(L1, "Starting %dx thread, affinity: %d.", cfg.iMultiway, (int)cfg.iCpuAff);
+			printer::inst()->print_backend_msg("CPU", L1, "Starting %dx thread, affinity: %d.", cfg.iMultiway, (int)cfg.iCpuAff);
 		}
 		else
-			printer::inst()->print_msg(L1, "Starting %dx thread, no affinity.", cfg.iMultiway);
+			printer::inst()->print_backend_msg("CPU", L1, "Starting %dx thread, no affinity.", cfg.iMultiway);
 
 		minethd* thd = new minethd(pWork, i + threadOffset, cfg.iMultiway, cfg.bNoPrefetch, cfg.iCpuAff);
-		pvThreads.push_back(thd);
+		pvThreads->push_back(thd);
 	}
 
 	return pvThreads;

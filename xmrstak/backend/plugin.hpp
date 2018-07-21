@@ -27,7 +27,7 @@ namespace xmrstak
 struct plugin
 {
 
-	plugin(const std::string backendName, const std::string libName) : fn_startBackend(nullptr), m_backendName(backendName)
+	plugin(const std::string backendName, const std::string libName) : fn_testBackend(nullptr), fn_startBackend(nullptr), m_backendName(backendName)
 	{
 #ifdef WIN32
 		libBackend = LoadLibrary(TEXT((libName + ".dll").c_str()));
@@ -59,21 +59,42 @@ struct plugin
 #endif
 
 #ifdef WIN32
+		fn_testBackend = (testBackend_t) GetProcAddress(libBackend, "xmrstak_test_backend");
+		if (!fn_testBackend)
+		{
+			std::cerr << "WARNING: backend plugin " << libName << " contains no entry 'xmrstak_test_backend': " <<GetLastError()<< std::endl;
+		}
 		fn_startBackend = (startBackend_t) GetProcAddress(libBackend, "xmrstak_start_backend");
 		if (!fn_startBackend)
 		{
 			std::cerr << "WARNING: backend plugin " << libName << " contains no entry 'xmrstak_start_backend': " <<GetLastError()<< std::endl;
 		}
 #else
+		const char* dlsym_error;
+		// reset last error
+		dlerror();
+		fn_testBackend = (testBackend_t) dlsym(libBackend, "xmrstak_test_backend");
+		dlsym_error = dlerror();
+		if(dlsym_error)
+		{
+			std::cerr << "WARNING: backend plugin " << libName << " contains no entry 'xmrstak_test_backend': " << dlsym_error << std::endl;
+		}
 		// reset last error
 		dlerror();
 		fn_startBackend = (startBackend_t) dlsym(libBackend, "xmrstak_start_backend");
-		const char* dlsym_error = dlerror();
+		dlsym_error = dlerror();
 		if(dlsym_error)
 		{
 			std::cerr << "WARNING: backend plugin " << libName << " contains no entry 'xmrstak_start_backend': " << dlsym_error << std::endl;
 		}
 #endif
+	}
+
+	bool testBackend(environment& env)
+	{
+		if(fn_testBackend == nullptr)
+			return true;
+		return fn_testBackend(env);
 	}
 
 	std::vector<iBackend*>* startBackend(uint32_t threadOffset, miner_work& pWork, environment& env)
@@ -90,8 +111,10 @@ struct plugin
 
 	std::string m_backendName;
 
+	typedef bool (*testBackend_t)(environment& env);
 	typedef std::vector<iBackend*>* (*startBackend_t)(uint32_t threadOffset, miner_work& pWork, environment& env);
 
+	testBackend_t fn_testBackend;
 	startBackend_t fn_startBackend;
 
 #ifdef WIN32

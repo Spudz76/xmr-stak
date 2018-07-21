@@ -7,6 +7,7 @@
 #include <cuda.h>
 #include <cuda_runtime.h>
 #include  <algorithm>
+#include "xmrstak/misc/console.hpp"
 #include "xmrstak/jconf.hpp"
 
 #ifdef __CUDACC__
@@ -250,7 +251,7 @@ extern "C" int cryptonight_extra_cpu_init(nvid_ctx* ctx)
 	err = cudaSetDevice(ctx->device_id);
 	if(err != cudaSuccess)
 	{
-		printf("GPU %d: %s", ctx->device_id, cudaGetErrorString(err));
+		printer::inst()->print_backend_msg("CUDA", L0,"GPU %d: %s", ctx->device_id, cudaGetErrorString(err));
 		return 0;
 	}
 
@@ -416,11 +417,11 @@ extern "C" int cuda_get_devicecount( int* deviceCount)
 	if(err != cudaSuccess)
 	{
 		if(err == cudaErrorNoDevice)
-			printf("ERROR: NVIDIA no CUDA device found!\n");
+			printer::inst()->print_backend_msg("CUDA", L0, "ERROR: NVIDIA no CUDA device found!\n");
 		else if(err == cudaErrorInsufficientDriver)
-			printf("WARNING: NVIDIA Insufficient driver!\n");
+			printer::inst()->print_backend_msg("CUDA", L0, "WARNING: NVIDIA Insufficient driver!\n");
 		else
-			printf("WARNING: NVIDIA Unable to query number of CUDA devices!\n");
+			printer::inst()->print_backend_msg("CUDA", L0, "WARNING: NVIDIA Unable to query number of CUDA devices!\n");
 		return 0;
 	}
 
@@ -444,13 +445,13 @@ extern "C" int cuda_get_deviceinfo(nvid_ctx* ctx)
 	err = cudaDriverGetVersion(&version);
 	if(err != cudaSuccess)
 	{
-		printf("Unable to query CUDA driver version! Is an nVidia driver installed?\n");
+		printer::inst()->print_backend_msg("CUDA", L0, "Unable to query CUDA driver version! Is an nVidia driver installed?\n");
 		return 1;
 	}
 
 	if(version < CUDART_VERSION)
 	{
-		printf("Driver does not support CUDA %d.%d API! Update your nVidia driver!\n", CUDART_VERSION / 1000, (CUDART_VERSION % 1000) / 10);
+		printer::inst()->print_backend_msg("CUDA", L0, "Driver does not support CUDA %d.%d API! Update your nVidia driver!\n", CUDART_VERSION / 1000, (CUDART_VERSION % 1000) / 10);
 		return 1;
 	}
 
@@ -462,7 +463,7 @@ extern "C" int cuda_get_deviceinfo(nvid_ctx* ctx)
 
 	if(ctx->device_id >= GPU_N)
 	{
-		printf("Invalid device ID!\n");
+		printer::inst()->print_backend_msg("CUDA", L0, "Invalid device ID!\n");
 		return 1;
 	}
 
@@ -470,7 +471,7 @@ extern "C" int cuda_get_deviceinfo(nvid_ctx* ctx)
 	err = cudaGetDeviceProperties(&props, ctx->device_id);
 	if(err != cudaSuccess)
 	{
-		printf("\nGPU %d: %s\n%s line %d\n", ctx->device_id, cudaGetErrorString(err), __FILE__, __LINE__);
+		printer::inst()->print_backend_msg("CUDA", L0, "\nGPU %d: %s\n%s line %d\n", ctx->device_id, cudaGetErrorString(err), __FILE__, __LINE__);
 		return 1;
 	}
 
@@ -502,7 +503,7 @@ extern "C" int cuda_get_deviceinfo(nvid_ctx* ctx)
 		std::vector<int>::iterator it = std::find(arch.begin(), arch.end(), 20);
 		if(it == arch.end())
 		{
-			printf("WARNING: NVIDIA GPU %d: miner not compiled for CUDA architecture %d.\n", ctx->device_id, gpuArch);
+			printer::inst()->print_backend_msg("CUDA", L0, "WARNING: NVIDIA GPU %d: miner not compiled for CUDA architecture %d.\n", ctx->device_id, gpuArch);
 			return 5;
 		}
 	}
@@ -520,7 +521,7 @@ extern "C" int cuda_get_deviceinfo(nvid_ctx* ctx)
 				minSupportedArch = arch[i];
 		if(minSupportedArch < 30 || gpuArch < minSupportedArch)
 		{
-			printf("WARNING: NVIDIA GPU %d: miner not compiled for CUDA architecture %d.\n", ctx->device_id, gpuArch);
+			printer::inst()->print_backend_msg("CUDA", L0, "WARNING: NVIDIA GPU %d: miner not compiled for CUDA architecture %d.\n", ctx->device_id, gpuArch);
 			return 5;
 		}
 	}
@@ -586,14 +587,14 @@ extern "C" int cuda_get_deviceinfo(nvid_ctx* ctx)
 		err = cudaSetDevice(ctx->device_id);
 		if(err != cudaSuccess)
 		{
-			printf("WARNING: NVIDIA GPU %d: cannot be selected.\n", ctx->device_id);
+			printer::inst()->print_backend_msg("CUDA", L0, "WARNING: NVIDIA GPU %d: cannot be selected.\n", ctx->device_id);
 			return 2;
 		}
 		// trigger that a context on the gpu will be allocated
 		err = cudaMalloc(&tmp, 256);
 		if(err != cudaSuccess)
 		{
-			printf("WARNING: NVIDIA GPU %d: context cannot be created.\n", ctx->device_id);
+			printer::inst()->print_backend_msg("CUDA", L0, "WARNING: NVIDIA GPU %d: context cannot be created.\n", ctx->device_id);
 			return 3;
 		}
 
@@ -626,7 +627,7 @@ extern "C" int cuda_get_deviceinfo(nvid_ctx* ctx)
 		size_t usedMem = totalMemory - freeMemory;
 		if(usedMem >= maxMemUsage)
 		{
-			printf("WARNING: NVIDIA GPU %d: already %s MiB memory in use, skip GPU.\n",
+			printer::inst()->print_backend_msg("CUDA", L0, "WARNING: NVIDIA GPU %d: already %s MiB memory in use, skip GPU.\n",
 				ctx->device_id,
 				std::to_string(usedMem/byteToMiB).c_str());
 			return 4;

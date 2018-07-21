@@ -23,7 +23,7 @@ void bindMemoryToNUMANode( size_t puId )
 
 	if(!hwloc_topology_get_support(topology)->membind->set_thisthread_membind)
 	{
-		printer::inst()->print_msg(L0, "hwloc: set_thisthread_membind not supported");
+		printer::inst()->print_backend_msg("CPU", L0, "hwloc: set_thisthread_membind not supported");
 		hwloc_topology_destroy(topology);
 		return;
 	}
@@ -43,11 +43,11 @@ void bindMemoryToNUMANode( size_t puId )
 				HWLOC_MEMBIND_BIND,
 				HWLOC_MEMBIND_THREAD))
 			{
-				printer::inst()->print_msg(L0, "hwloc: can't bind memory");
+				printer::inst()->print_backend_msg("CPU", L0, "hwloc: can't bind memory");
 			}
 			else
 			{
-				printer::inst()->print_msg(L0, "hwloc: memory pinned");
+				printer::inst()->print_backend_msg("CPU", L0, "hwloc: memory pinned");
 				break;
 			}
 		}

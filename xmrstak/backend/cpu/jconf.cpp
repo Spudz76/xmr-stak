@@ -161,7 +161,7 @@ bool jconf::parse_config(const char* sFilename)
 	pFile = fopen(sFilename, "rb");
 	if (pFile == NULL)
 	{
-		printer::inst()->print_msg(L0, "Failed to open config file %s.", sFilename);
+		printer::inst()->print_backend_msg("CPU", L0, "Failed to open config file %s.", sFilename);
 		return false;
 	}
 
@@ -172,14 +172,14 @@ bool jconf::parse_config(const char* sFilename)
 	if(flen >= 64*1024)
 	{
 		fclose(pFile);
-		printer::inst()->print_msg(L0, "Oversized config file - %s.", sFilename);
+		printer::inst()->print_backend_msg("CPU", L0, "Oversized config file - %s.", sFilename);
 		return false;
 	}
 
 	if(flen <= 16)
 	{
 		fclose(pFile);
-		printer::inst()->print_msg(L0, "File is empty or too short - %s.", sFilename);
+		printer::inst()->print_backend_msg("CPU", L0, "File is empty or too short - %s.", sFilename);
 		return false;
 	}
 
@@ -188,7 +188,7 @@ bool jconf::parse_config(const char* sFilename)
 	{
 		free(buffer);
 		fclose(pFile);
-		printer::inst()->print_msg(L0, "Read error while reading %s.", sFilename);
+		printer::inst()->print_backend_msg("CPU", L0, "Read error while reading %s.", sFilename);
 		return false;
 	}
 	fclose(pFile);
@@ -211,14 +211,14 @@ bool jconf::parse_config(const char* sFilename)
 
 	if(prv->jsonDoc.HasParseError())
 	{
-		printer::inst()->print_msg(L0, "JSON config parse error in '%s' (offset %llu): %s",
+		printer::inst()->print_backend_msg("CPU", L0, "JSON config parse error in '%s' (offset %llu): %s",
 			sFilename, int_port(prv->jsonDoc.GetErrorOffset()), GetParseError_En(prv->jsonDoc.GetParseError()));
 		return false;
 	}
 
 	if(!prv->jsonDoc.IsObject())
 	{ //This should never happen as we created the root ourselves
-		printer::inst()->print_msg(L0, "Invalid config file '%s'. No root?", sFilename);
+		printer::inst()->print_backend_msg("CPU", L0, "Invalid config file '%s'. No root?", sFilename);
 		return false;
 	}
 
@@ -226,7 +226,7 @@ bool jconf::parse_config(const char* sFilename)
 	{
 		if(oConfigValues[i].iName != i)
 		{
-			printer::inst()->print_msg(L0, "Code error. oConfigValues are not in order.");
+			printer::inst()->print_backend_msg("CPU", L0, "Code error. oConfigValues are not in order.");
 			return false;
 		}
 
@@ -234,13 +234,13 @@ bool jconf::parse_config(const char* sFilename)
 
 		if(prv->configValues[i] == nullptr)
 		{
-			printer::inst()->print_msg(L0, "Invalid config file '%s'. Missing value \"%s\".", sFilename, oConfigValues[i].sName);
+			printer::inst()->print_backend_msg("CPU", L0, "Invalid config file '%s'. Missing value \"%s\".", sFilename, oConfigValues[i].sName);
 			return false;
 		}
 
 		if(!checkType(prv->configValues[i]->GetType(), oConfigValues[i].iType))
 		{
-			printer::inst()->print_msg(L0, "Invalid config file '%s'. Value \"%s\" has unexpected type.", sFilename, oConfigValues[i].sName);
+			printer::inst()->print_backend_msg("CPU", L0, "Invalid config file '%s'. Value \"%s\" has unexpected type.", sFilename, oConfigValues[i].sName);
 			return false;
 		}
 	}
@@ -250,7 +250,7 @@ bool jconf::parse_config(const char* sFilename)
 	{
 		if(!GetThreadConfig(i, c))
 		{
-			printer::inst()->print_msg(L0, "Thread %llu has invalid config.", int_port(i));
+			printer::inst()->print_backend_msg("CPU", L0, "Thread %llu has invalid config.", int_port(i));
 			return false;
 		}
 	}

@@ -583,9 +583,6 @@ bool jconf::parse_config(const char* sFilename, const char* sFilenamePools)
 	if(prv->configValues[bAesOverride]->IsBool())
 		bHaveAes = prv->configValues[bAesOverride]->GetBool();
 
-	if(!bHaveAes)
-		printer::inst()->print_msg(L0, "Your CPU doesn't support hardware AES. Don't expect high hashrates.");
-
 	printer::inst()->set_verbose_level(prv->configValues[iVerboseLevel]->GetUint64());
 
 	if(GetSlowMemSetting() == unknown_value)

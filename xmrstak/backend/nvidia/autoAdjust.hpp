@@ -62,7 +62,7 @@ public:
 			if(cuda_get_deviceinfo(&ctx) == 0)
 				nvidCtxVec.push_back(ctx);
 			else
-				printer::inst()->print_msg(L0, "WARNING: NVIDIA setup failed for GPU %d.\n", i);
+				printer::inst()->print_backend_msg("CUDA", L0, "WARNING: NVIDIA setup failed for GPU %d.\n", i);
 
 		}
 
@@ -102,7 +102,7 @@ private:
 
 		configTpl.replace("GPUCONFIG",conf);
 		configTpl.write(params::inst().configFileNVIDIA);
-		printer::inst()->print_msg(L0, "NVIDIA: GPU configuration stored in file '%s'", params::inst().configFileNVIDIA.c_str());
+		printer::inst()->print_backend_msg("CUDA", L0, "NVIDIA: GPU configuration stored in file '%s'", params::inst().configFileNVIDIA.c_str());
 	}
 
 	std::vector<nvid_ctx> nvidCtxVec;

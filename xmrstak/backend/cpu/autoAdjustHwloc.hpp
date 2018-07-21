@@ -79,12 +79,12 @@ public:
 		{
 			// \todo add fallback to default auto adjust
 			conf += std::string("    { \"low_power_mode\" : false, \"no_prefetch\" : true, \"affine_to_cpu\" : false },\n");
-			printer::inst()->print_msg(L0, "Autoconf FAILED: %s. Create config for a single thread.", err.what());
+			printer::inst()->print_backend_msg("CPU", L0, "Autoconf FAILED: %s. Create config for a single thread.", err.what());
 		}
 
 		configTpl.replace("CPUCONFIG",conf);
 		configTpl.write(params::inst().configFileCPU);
-		printer::inst()->print_msg(L0, "CPU configuration stored in file '%s'", params::inst().configFileCPU.c_str());
+		printer::inst()->print_backend_msg("CPU", L0, "CPU configuration stored in file '%s'", params::inst().configFileCPU.c_str());
 		/* Destroy topology object. */
 		hwloc_topology_destroy(topology);
 

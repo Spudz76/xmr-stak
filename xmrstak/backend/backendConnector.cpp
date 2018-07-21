@@ -50,9 +50,11 @@
 namespace xmrstak
 {
 
+plugin cpuplugin("CPU", "xmrstak-cpu-backend");
+
 bool BackendConnector::self_test()
 {
-	return cpu::minethd::self_test();
+	return cpuplugin.testBackend(environment::inst());
 }
 
 std::vector<iBackend*>* BackendConnector::thread_starter(miner_work& pWork)
@@ -63,11 +65,11 @@ std::vector<iBackend*>* BackendConnector::thread_starter(miner_work& pWork)
 #ifndef CONF_NO_CUDA
 	if(params::inst().useNVIDIA)
 	{
-		plugin nvidiaplugin("NVIDIA", "xmrstak_cuda_backend");
+		plugin nvidiaplugin("NVIDIA", "xmrstak-cuda-backend");
 		std::vector<iBackend*>* nvidiaThreads = nvidiaplugin.startBackend(static_cast<uint32_t>(pvThreads->size()), pWork, environment::inst());
 		pvThreads->insert(std::end(*pvThreads), std::begin(*nvidiaThreads), std::end(*nvidiaThreads));
 		if(nvidiaThreads->size() == 0)
-			printer::inst()->print_msg(L0, "WARNING: backend NVIDIA disabled.");
+			printer::inst()->print_backend_msg("CUDA", L0, "WARNING: backend NVIDIA disabled.");
 	}
 #endif
 
@@ -75,21 +77,21 @@ std::vector<iBackend*>* BackendConnector::thread_starter(miner_work& pWork)
 	if(params::inst().useAMD)
 	{
 		const std::string backendName = xmrstak::params::inst().openCLVendor;
-		plugin amdplugin(backendName, "xmrstak_opencl_backend");
+		plugin amdplugin(backendName, "xmrstak-opencl-backend");
 		std::vector<iBackend*>* amdThreads = amdplugin.startBackend(static_cast<uint32_t>(pvThreads->size()), pWork, environment::inst());
 		pvThreads->insert(std::end(*pvThreads), std::begin(*amdThreads), std::end(*amdThreads));
 		if(amdThreads->size() == 0)
-			printer::inst()->print_msg(L0, "WARNING: backend %s (OpenCL) disabled.", backendName.c_str());
+			printer::inst()->print_backend_msg("OpenCL", L0, "WARNING: backend %s disabled.", backendName.c_str());
 	}
 #endif
 
 #ifndef CONF_NO_CPU
 	if(params::inst().useCPU)
 	{
-		auto cpuThreads = cpu::minethd::thread_starter(static_cast<uint32_t>(pvThreads->size()), pWork);
-		pvThreads->insert(std::end(*pvThreads), std::begin(cpuThreads), std::end(cpuThreads));
-		if(cpuThreads.size() == 0)
-			printer::inst()->print_msg(L0, "WARNING: backend CPU disabled.");
+		std::vector<iBackend*>* cpuThreads = cpuplugin.startBackend(static_cast<uint32_t>(pvThreads->size()), pWork, environment::inst());
+		pvThreads->insert(std::end(*pvThreads), std::begin(*cpuThreads), std::end(*cpuThreads));
+		if(cpuThreads->size() == 0)
+			printer::inst()->print_backend_msg("CPU", L0, "WARNING: backend CPU disabled.");
 	}
 #endif
 

@@ -97,7 +97,7 @@ void minethd::start_mining()
 	thread_work_promise.set_value();
 	if(this->affinity >= 0) //-1 means no affinity
 		if(!cpu::minethd::thd_setaffinity(oWorkThd.native_handle(), affinity))
-			printer::inst()->print_msg(L1, "WARNING setting affinity failed.");
+			printer::inst()->print_backend_msg("CUDA", L1, "WARNING setting affinity failed.");
 }
 
 
@@ -121,7 +121,7 @@ bool minethd::self_test()
 	delete ctx0;
 
 	//if(!bResult)
-	//	printer::inst()->print_msg(L0,
+	//	printer::inst()->print_backend_msg("CUDA", L0,
 	//	"Cryptonight hash self-test failed. This might be caused by bad compiler optimizations.");
 
 	return bResult;
@@ -174,13 +174,13 @@ std::vector<iBackend*>* minethd::thread_starter(uint32_t threadOffset, miner_wor
 		if(cfg.cpu_aff >= 0)
 		{
 #if defined(__APPLE__)
-			printer::inst()->print_msg(L1, "WARNING on macOS thread affinity is only advisory.");
+			printer::inst()->print_backend_msg("CUDA", L1, "WARNING on macOS thread affinity is only advisory.");
 #endif
 
-			printer::inst()->print_msg(L1, "Starting NVIDIA GPU thread %d, affinity: %d.", i, (int)cfg.cpu_aff);
+			printer::inst()->print_backend_msg("CUDA", L1, "Starting NVIDIA GPU thread %d, affinity: %d.", i, (int)cfg.cpu_aff);
 		}
 		else
-			printer::inst()->print_msg(L1, "Starting NVIDIA GPU thread %d, no affinity.", i);
+			printer::inst()->print_backend_msg("CUDA", L1, "Starting NVIDIA GPU thread %d, no affinity.", i);
 
 		minethd* thd = new minethd(pWork, i + threadOffset, cfg);
 		pvThreads->push_back(thd);
@@ -202,7 +202,7 @@ void minethd::work_main()
 
 	if(cuda_get_deviceinfo(&ctx) != 0 || cryptonight_extra_cpu_init(&ctx) != 1)
 	{
-		printer::inst()->print_msg(L0, "Setup failed for GPU %d. Exiting.\n", (int)iThreadNo);
+		printer::inst()->print_backend_msg("CUDA", L0, "Setup failed for GPU %d. Exiting.\n", (int)iThreadNo);
 		std::exit(0);
 	}
 

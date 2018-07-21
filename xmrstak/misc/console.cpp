@@ -195,6 +195,38 @@ void printer::print_msg(verbosity verbose, const char* fmt, ...)
     print_str(buf);
 }
 
+void printer::print_backend_msg(const char* backend_tag, verbosity verbose, const char* fmt, ...)
+{
+	if(verbose > verbose_level)
+		return;
+
+	char buf[1024];
+	size_t bpos;
+	tm stime;
+
+	time_t now = time(nullptr);
+	comp_localtime(&now, &stime);
+	strftime(buf, sizeof(buf), "[%F %T]", &stime);
+	bpos = strlen(buf);
+
+	snprintf(buf+bpos, sizeof(buf)-bpos, " :%s: ", backend_tag);
+	bpos = strlen(buf);
+
+	va_list args;
+	va_start(args, fmt);
+	vsnprintf(buf+bpos, sizeof(buf)-bpos, fmt, args);
+	va_end(args);
+	bpos = strlen(buf);
+
+	if(bpos+2 >= sizeof(buf))
+		return;
+
+	buf[bpos] = '\n';
+	buf[bpos+1] = '\0';
+
+    print_str(buf);
+}
+
 void printer::print_str(const char* str)
 {
 	std::unique_lock<std::mutex> lck(print_mutex);

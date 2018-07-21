@@ -180,7 +180,7 @@ size_t cryptonight_init(size_t use_fast_mem, size_t use_mlock, alloc_msg* msg)
 
 	if(AddPrivilege(TEXT("SeLockMemoryPrivilege")) == 0)
 	{
-		printer::inst()->print_msg(L0, "Elevating because we need to set up fast memory privileges.");
+		printer::inst()->print_backend_msg("CPU", L0, "Elevating because we need to set up fast memory privileges.");
 		RequestElevation();
 
 		if(AddLargePageRights())

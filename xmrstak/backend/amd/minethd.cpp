@@ -68,7 +68,7 @@ minethd::minethd(miner_work& pWork, size_t iNo, GpuContext* ctx, const jconf::th
 
 	if(affinity >= 0) //-1 means no affinity
 		if(!cpu::minethd::thd_setaffinity(oWorkThd.native_handle(), affinity))
-			printer::inst()->print_msg(L1, "WARNING setting affinity failed.");
+			printer::inst()->print_backend_msg("OpenCL", L1, "WARNING setting affinity failed.");
 }
 
 extern "C"  {
@@ -86,7 +86,7 @@ bool minethd::init_gpus()
 {
 	size_t i, n = jconf::inst()->GetThreadCount();
 
-	printer::inst()->print_msg(L1, "Compiling code and initializing GPUs. This will take a while...");
+	printer::inst()->print_backend_msg("OpenCL", L1, "Compiling code and initializing GPUs. This will take a while...");
 	vGpuData.resize(n);
 
 	jconf::thd_cfg cfg;
@@ -126,7 +126,7 @@ std::vector<iBackend*>* minethd::thread_starter(uint32_t threadOffset, miner_wor
 
 	if(!init_gpus())
 	{
-		printer::inst()->print_msg(L1, "WARNING: AMD device not found");
+		printer::inst()->print_backend_msg("OpenCL", L1, "WARNING: AMD device not found");
 		return pvThreads;
 	}
 
@@ -143,13 +143,13 @@ std::vector<iBackend*>* minethd::thread_starter(uint32_t threadOffset, miner_wor
 		if(cfg.cpu_aff >= 0)
 		{
 #if defined(__APPLE__)
-			printer::inst()->print_msg(L1, "WARNING on macOS thread affinity is only advisory.");
+			printer::inst()->print_backend_msg("OpenCL", L1, "WARNING on macOS thread affinity is only advisory.");
 #endif
 
-			printer::inst()->print_msg(L1, "Starting %s GPU (OpenCL) thread %d, affinity: %d.", backendName.c_str(), i, (int)cfg.cpu_aff);
+			printer::inst()->print_backend_msg("OpenCL", L1, "Starting %s GPU thread %d, affinity: %d.", backendName.c_str(), i, (int)cfg.cpu_aff);
 		}
 		else
-			printer::inst()->print_msg(L1, "Starting %s GPU (OpenCL) thread %d, no affinity.", backendName.c_str(), i);
+			printer::inst()->print_backend_msg("OpenCL", L1, "Starting %s GPU thread %d, no affinity.", backendName.c_str(), i);
 
 		minethd* thd = new minethd(pWork, i + threadOffset, &vGpuData[i], cfg);
 		pvThreads->push_back(thd);
