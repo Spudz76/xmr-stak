@@ -332,18 +332,18 @@ extern "C"
 #ifdef WIN32
 __declspec(dllexport)
 #endif
-bool xmrstak_test_backend(environment& env)
-{
-	environment::inst(&env);
-	return cpu::minethd::self_test();
-}
-#ifdef WIN32
-__declspec(dllexport)
-#endif
 std::vector<iBackend*>* xmrstak_start_backend(uint32_t threadOffset, miner_work& pWork, environment& env)
 {
 	environment::inst(&env);
 	return cpu::minethd::thread_starter(threadOffset, pWork);
+}
+#ifdef WIN32
+__declspec(dllexport)
+#endif
+bool xmrstak_test_backend(environment& env)
+{
+	environment::inst(&env);
+	return cpu::minethd::self_test();
 }
 } // extern "C"
 

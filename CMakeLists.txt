@@ -211,7 +211,7 @@ list(APPEND CMAKE_PREFIX_PATH "$ENV{CMAKE_PREFIX_PATH}")
 # Find OpenCL
 ###############################################################################
 
-option(OpenCL_ENABLE "Enable or disable OpenCL spport (AMD GPU support)" ON)
+option(OpenCL_ENABLE "Enable or disable OpenCL support (AMD GPU support)" ON)
 if(OpenCL_ENABLE)
     # try to find AMD OpenCL before NVIDIA OpenCL
     find_path(OpenCL_INCLUDE_DIR
@@ -474,8 +474,8 @@ target_link_libraries(xmr-stak-backend xmr-stak-c ${CMAKE_DL_LIBS})
 
 # compile CPU backend
 file(GLOB CPUSRCFILES
-    "xmrstak/backend/cpu/*.cpp"
     "xmrstak/backend/cpu/crypto/*.cpp"
+    "xmrstak/backend/cpu/*.cpp"
 )
 add_library(
     xmrstak-cpu-backend
@@ -554,7 +554,8 @@ if( NOT CMAKE_INSTALL_PREFIX STREQUAL PROJECT_BINARY_DIR )
             RUNTIME DESTINATION "${CMAKE_INSTALL_PREFIX}/${LIBRARY_OUTPUT_PATH}")
     else()
         install(TARGETS xmrstak-cpu-backend
-            LIBRARY DESTINATION "${CMAKE_INSTALL_PREFIX}/${LIBRARY_OUTPUT_PATH}")
+            LIBRARY DESTINATION "${CMAKE_INSTALL_PREFIX}/${LIBRARY_OUTPUT_PATH}"
+            PERMISSIONS OWNER_READ GROUP_READ WORLD_READ)
     endif()
     if(CUDA_FOUND)
         if(WIN32)
@@ -562,7 +563,8 @@ if( NOT CMAKE_INSTALL_PREFIX STREQUAL PROJECT_BINARY_DIR )
                 RUNTIME DESTINATION "${CMAKE_INSTALL_PREFIX}/${LIBRARY_OUTPUT_PATH}")
         else()
             install(TARGETS xmrstak-cuda-backend
-                LIBRARY DESTINATION "${CMAKE_INSTALL_PREFIX}/${LIBRARY_OUTPUT_PATH}")
+                LIBRARY DESTINATION "${CMAKE_INSTALL_PREFIX}/${LIBRARY_OUTPUT_PATH}"
+                PERMISSIONS OWNER_READ GROUP_READ WORLD_READ)
         endif()
     endif()
     if(OpenCL_FOUND)
@@ -571,7 +573,8 @@ if( NOT CMAKE_INSTALL_PREFIX STREQUAL PROJECT_BINARY_DIR )
                 RUNTIME DESTINATION "${CMAKE_INSTALL_PREFIX}/${LIBRARY_OUTPUT_PATH}")
         else()
             install(TARGETS xmrstak-opencl-backend
-                LIBRARY DESTINATION "${CMAKE_INSTALL_PREFIX}/${LIBRARY_OUTPUT_PATH}")
+                LIBRARY DESTINATION "${CMAKE_INSTALL_PREFIX}/${LIBRARY_OUTPUT_PATH}"
+                PERMISSIONS OWNER_READ GROUP_READ WORLD_READ)
         endif()
     endif()
 else()

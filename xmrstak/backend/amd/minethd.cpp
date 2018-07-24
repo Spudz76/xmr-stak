@@ -29,7 +29,7 @@
 #include "xmrstak/backend/cpu/crypto/cryptonight.h"
 #include "xmrstak/misc/configEditor.hpp"
 #include "xmrstak/misc/console.hpp"
-#include "xmrstak/backend/cpu/minethd.hpp"
+#include "xmrstak/backend/reschk.hpp"
 #include "xmrstak/jconf.hpp"
 #include "xmrstak/misc/executor.hpp"
 #include "xmrstak/misc/environment.hpp"
@@ -67,8 +67,8 @@ minethd::minethd(miner_work& pWork, size_t iNo, GpuContext* ctx, const jconf::th
 	order_guard.wait();
 
 	if(affinity >= 0) //-1 means no affinity
-		if(!cpu::minethd::thd_setaffinity(oWorkThd.native_handle(), affinity))
-			printer::inst()->print_backend_msg("OpenCL", L1, "WARNING setting affinity failed.");
+		if(!cpu::reschk::thd_setaffinity(oWorkThd.native_handle(), affinity))
+			printer::inst()->print_backend_msg("OpenCL", L1, "WARNING reschk setting affinity failed.");
 }
 
 extern "C"  {
@@ -171,11 +171,11 @@ void minethd::work_main()
 
 	uint64_t iCount = 0;
 	cryptonight_ctx* cpu_ctx;
-	cpu_ctx = cpu::minethd::minethd_alloc_ctx();
+	cpu_ctx = cpu::reschk::reschk_alloc_ctx();
 
 	// start with root algorithm and switch later if fork version is reached
 	auto miner_algo = ::jconf::inst()->GetCurrentCoinSelection().GetDescription(1).GetMiningAlgoRoot();
-	cn_hash_fun hash_fun = cpu::minethd::func_selector(::jconf::inst()->HaveHardwareAes(), true /*bNoPrefetch*/, miner_algo);
+	cn_hash_fun hash_fun = cpu::reschk::func_selector(miner_algo);
 
 	uint8_t version = 0;
 	size_t lastPoolId = 0;
@@ -203,12 +203,12 @@ void minethd::work_main()
 			if(new_version >= coinDesc.GetMiningForkVersion())
 			{
 				miner_algo = coinDesc.GetMiningAlgo();
-				hash_fun = cpu::minethd::func_selector(::jconf::inst()->HaveHardwareAes(), true /*bNoPrefetch*/, miner_algo);
+				hash_fun = cpu::reschk::func_selector(miner_algo);
 			}
 			else
 			{
 				miner_algo = coinDesc.GetMiningAlgoRoot();
-				hash_fun = cpu::minethd::func_selector(::jconf::inst()->HaveHardwareAes(), true /*bNoPrefetch*/, miner_algo);
+				hash_fun = cpu::reschk::func_selector(miner_algo);
 			}
 			lastPoolId = oWork.iPoolId;
 			version = new_version;
