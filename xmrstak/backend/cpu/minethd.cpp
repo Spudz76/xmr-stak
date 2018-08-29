@@ -119,6 +119,9 @@ minethd::minethd(miner_work& pWork, size_t iNo, int iMultiway, bool no_prefetch,
 
 	switch (iMultiway)
 	{
+	case 10:
+		oWorkThd = std::thread(&minethd::deca_work_main, this);
+		break;
 	case 5:
 		oWorkThd = std::thread(&minethd::penta_work_main, this);
 		break;
@@ -181,7 +184,7 @@ cryptonight_ctx* minethd::minethd_alloc_ctx()
 	return nullptr; //Should never happen
 }
 
-static constexpr size_t MAX_N = 5;
+static constexpr size_t MAX_N = 10;
 bool minethd::self_test()
 {
 	alloc_msg msg = { 0 };
@@ -260,25 +263,25 @@ bool minethd::self_test()
 			bResult = bResult &&  memcmp(out, "\x3e\xbb\x7f\x9f\x7d\x27\x3d\x7c\x31\x8d\x86\x94\x77\x55\x0c\xc8\x00\xcf\xb1\x1b\x0c\xad\xb7\xff\xbd\xf6\xf8\x9f\x3a\x47\x1c\x59"
 					"\xb4\x77\xd5\x02\xe4\xd8\x48\x7f\x42\xdf\xe3\x8e\xed\x73\x81\x7a\xda\x91\xb7\xe2\x63\xd2\x91\x71\xb6\x5c\x44\x3a\x01\x2a\x41\x22", 64) == 0;
 
-			hashf_multi = func_multi_selector(2, ::jconf::inst()->HaveHardwareAes(), true, xmrstak_algo::cryptonight);
+			hashf_multi = func_multi_selector(3, ::jconf::inst()->HaveHardwareAes(), true, xmrstak_algo::cryptonight);
 			hashf_multi("The quick brown fox jumps over the lazy dogThe quick brown fox jumps over the lazy log", 43, out, ctx);
 			bResult = bResult &&  memcmp(out, "\x3e\xbb\x7f\x9f\x7d\x27\x3d\x7c\x31\x8d\x86\x94\x77\x55\x0c\xc8\x00\xcf\xb1\x1b\x0c\xad\xb7\xff\xbd\xf6\xf8\x9f\x3a\x47\x1c\x59"
 					"\xb4\x77\xd5\x02\xe4\xd8\x48\x7f\x42\xdf\xe3\x8e\xed\x73\x81\x7a\xda\x91\xb7\xe2\x63\xd2\x91\x71\xb6\x5c\x44\x3a\x01\x2a\x41\x22", 64) == 0;
 
-			hashf_multi = func_multi_selector(3, ::jconf::inst()->HaveHardwareAes(), false, xmrstak_algo::cryptonight);
+			hashf_multi = func_multi_selector(4, ::jconf::inst()->HaveHardwareAes(), false, xmrstak_algo::cryptonight);
 			hashf_multi("This is a testThis is a testThis is a test", 14, out, ctx);
 			bResult = bResult &&  memcmp(out, "\xa0\x84\xf0\x1d\x14\x37\xa0\x9c\x69\x85\x40\x1b\x60\xd4\x35\x54\xae\x10\x58\x02\xc5\xf5\xd8\xa9\xb3\x25\x36\x49\xc0\xbe\x66\x05"
 					"\xa0\x84\xf0\x1d\x14\x37\xa0\x9c\x69\x85\x40\x1b\x60\xd4\x35\x54\xae\x10\x58\x02\xc5\xf5\xd8\xa9\xb3\x25\x36\x49\xc0\xbe\x66\x05"
 					"\xa0\x84\xf0\x1d\x14\x37\xa0\x9c\x69\x85\x40\x1b\x60\xd4\x35\x54\xae\x10\x58\x02\xc5\xf5\xd8\xa9\xb3\x25\x36\x49\xc0\xbe\x66\x05", 96) == 0;
 
-			hashf_multi = func_multi_selector(4, ::jconf::inst()->HaveHardwareAes(), false, xmrstak_algo::cryptonight);
+			hashf_multi = func_multi_selector(5, ::jconf::inst()->HaveHardwareAes(), false, xmrstak_algo::cryptonight);
 			hashf_multi("This is a testThis is a testThis is a testThis is a test", 14, out, ctx);
 			bResult = bResult &&  memcmp(out, "\xa0\x84\xf0\x1d\x14\x37\xa0\x9c\x69\x85\x40\x1b\x60\xd4\x35\x54\xae\x10\x58\x02\xc5\xf5\xd8\xa9\xb3\x25\x36\x49\xc0\xbe\x66\x05"
 					"\xa0\x84\xf0\x1d\x14\x37\xa0\x9c\x69\x85\x40\x1b\x60\xd4\x35\x54\xae\x10\x58\x02\xc5\xf5\xd8\xa9\xb3\x25\x36\x49\xc0\xbe\x66\x05"
 					"\xa0\x84\xf0\x1d\x14\x37\xa0\x9c\x69\x85\x40\x1b\x60\xd4\x35\x54\xae\x10\x58\x02\xc5\xf5\xd8\xa9\xb3\x25\x36\x49\xc0\xbe\x66\x05"
 					"\xa0\x84\xf0\x1d\x14\x37\xa0\x9c\x69\x85\x40\x1b\x60\xd4\x35\x54\xae\x10\x58\x02\xc5\xf5\xd8\xa9\xb3\x25\x36\x49\xc0\xbe\x66\x05", 128) == 0;
 
-			hashf_multi = func_multi_selector(5, ::jconf::inst()->HaveHardwareAes(), false, xmrstak_algo::cryptonight);
+			hashf_multi = func_multi_selector(10, ::jconf::inst()->HaveHardwareAes(), false, xmrstak_algo::cryptonight);
 			hashf_multi("This is a testThis is a testThis is a testThis is a testThis is a test", 14, out, ctx);
 			bResult = bResult &&  memcmp(out, "\xa0\x84\xf0\x1d\x14\x37\xa0\x9c\x69\x85\x40\x1b\x60\xd4\x35\x54\xae\x10\x58\x02\xc5\xf5\xd8\xa9\xb3\x25\x36\x49\xc0\xbe\x66\x05"
 					"\xa0\x84\xf0\x1d\x14\x37\xa0\x9c\x69\x85\x40\x1b\x60\xd4\x35\x54\xae\x10\x58\x02\xc5\xf5\xd8\xa9\xb3\x25\x36\x49\xc0\xbe\x66\x05"
@@ -644,6 +647,11 @@ minethd::cn_hash_fun_multi minethd::func_multi_selector(size_t N, bool bHaveAes,
 	// therefore we will build a binary digit and select the
 	// function as a two digit binary
 
+	size_t NN(N);
+	if(NN == 10) {
+		NN = 6;
+	}
+
 	uint8_t algv;
 	switch(algo)
 	{
@@ -699,6 +707,10 @@ minethd::cn_hash_fun_multi minethd::func_multi_selector(size_t N, bool bHaveAes,
 		cryptonight_penta_hash<cryptonight_monero, true, false>,
 		cryptonight_penta_hash<cryptonight_monero, false, true>,
 		cryptonight_penta_hash<cryptonight_monero, true, true>,
+		cryptonight_deca_hash<cryptonight_monero, false, false>,
+		cryptonight_deca_hash<cryptonight_monero, true, false>,
+		cryptonight_deca_hash<cryptonight_monero, false, true>,
+		cryptonight_deca_hash<cryptonight_monero, true, true>,
 
 		cryptonight_double_hash<cryptonight_lite, false, false>,
 		cryptonight_double_hash<cryptonight_lite, true, false>,
@@ -716,6 +728,10 @@ minethd::cn_hash_fun_multi minethd::func_multi_selector(size_t N, bool bHaveAes,
 		cryptonight_penta_hash<cryptonight_lite, true, false>,
 		cryptonight_penta_hash<cryptonight_lite, false, true>,
 		cryptonight_penta_hash<cryptonight_lite, true, true>,
+		cryptonight_deca_hash<cryptonight_lite, false, false>,
+		cryptonight_deca_hash<cryptonight_lite, true, false>,
+		cryptonight_deca_hash<cryptonight_lite, false, true>,
+		cryptonight_deca_hash<cryptonight_lite, true, true>,
 
 		cryptonight_double_hash<cryptonight, false, false>,
 		cryptonight_double_hash<cryptonight, true, false>,
@@ -733,6 +749,10 @@ minethd::cn_hash_fun_multi minethd::func_multi_selector(size_t N, bool bHaveAes,
 		cryptonight_penta_hash<cryptonight, true, false>,
 		cryptonight_penta_hash<cryptonight, false, true>,
 		cryptonight_penta_hash<cryptonight, true, true>,
+		cryptonight_deca_hash<cryptonight, false, false>,
+		cryptonight_deca_hash<cryptonight, true, false>,
+		cryptonight_deca_hash<cryptonight, false, true>,
+		cryptonight_deca_hash<cryptonight, true, true>,
 
 		cryptonight_double_hash<cryptonight_heavy, false, false>,
 		cryptonight_double_hash<cryptonight_heavy, true, false>,
@@ -750,6 +770,10 @@ minethd::cn_hash_fun_multi minethd::func_multi_selector(size_t N, bool bHaveAes,
 		cryptonight_penta_hash<cryptonight_heavy, true, false>,
 		cryptonight_penta_hash<cryptonight_heavy, false, true>,
 		cryptonight_penta_hash<cryptonight_heavy, true, true>,
+		cryptonight_deca_hash<cryptonight_heavy, false, false>,
+		cryptonight_deca_hash<cryptonight_heavy, true, false>,
+		cryptonight_deca_hash<cryptonight_heavy, false, true>,
+		cryptonight_deca_hash<cryptonight_heavy, true, true>,
 
 		cryptonight_double_hash<cryptonight_aeon, false, false>,
 		cryptonight_double_hash<cryptonight_aeon, true, false>,
@@ -767,6 +791,10 @@ minethd::cn_hash_fun_multi minethd::func_multi_selector(size_t N, bool bHaveAes,
 		cryptonight_penta_hash<cryptonight_aeon, true, false>,
 		cryptonight_penta_hash<cryptonight_aeon, false, true>,
 		cryptonight_penta_hash<cryptonight_aeon, true, true>,
+		cryptonight_deca_hash<cryptonight_aeon, false, false>,
+		cryptonight_deca_hash<cryptonight_aeon, true, false>,
+		cryptonight_deca_hash<cryptonight_aeon, false, true>,
+		cryptonight_deca_hash<cryptonight_aeon, true, true>,
 
 		cryptonight_double_hash<cryptonight_ipbc, false, false>,
 		cryptonight_double_hash<cryptonight_ipbc, true, false>,
@@ -784,6 +812,10 @@ minethd::cn_hash_fun_multi minethd::func_multi_selector(size_t N, bool bHaveAes,
 		cryptonight_penta_hash<cryptonight_ipbc, true, false>,
 		cryptonight_penta_hash<cryptonight_ipbc, false, true>,
 		cryptonight_penta_hash<cryptonight_ipbc, true, true>,
+		cryptonight_deca_hash<cryptonight_ipbc, false, false>,
+		cryptonight_deca_hash<cryptonight_ipbc, true, false>,
+		cryptonight_deca_hash<cryptonight_ipbc, false, true>,
+		cryptonight_deca_hash<cryptonight_ipbc, true, true>,
 
 		cryptonight_double_hash<cryptonight_stellite, false, false>,
 		cryptonight_double_hash<cryptonight_stellite, true, false>,
@@ -801,6 +833,10 @@ minethd::cn_hash_fun_multi minethd::func_multi_selector(size_t N, bool bHaveAes,
 		cryptonight_penta_hash<cryptonight_stellite, true, false>,
 		cryptonight_penta_hash<cryptonight_stellite, false, true>,
 		cryptonight_penta_hash<cryptonight_stellite, true, true>,
+		cryptonight_deca_hash<cryptonight_stellite, false, false>,
+		cryptonight_deca_hash<cryptonight_stellite, true, false>,
+		cryptonight_deca_hash<cryptonight_stellite, false, true>,
+		cryptonight_deca_hash<cryptonight_stellite, true, true>,
 
 		cryptonight_double_hash<cryptonight_masari, false, false>,
 		cryptonight_double_hash<cryptonight_masari, true, false>,
@@ -818,6 +854,10 @@ minethd::cn_hash_fun_multi minethd::func_multi_selector(size_t N, bool bHaveAes,
 		cryptonight_penta_hash<cryptonight_masari, true, false>,
 		cryptonight_penta_hash<cryptonight_masari, false, true>,
 		cryptonight_penta_hash<cryptonight_masari, true, true>,
+		cryptonight_deca_hash<cryptonight_masari, false, false>,
+		cryptonight_deca_hash<cryptonight_masari, true, false>,
+		cryptonight_deca_hash<cryptonight_masari, false, true>,
+		cryptonight_deca_hash<cryptonight_masari, true, true>,
 		
 		cryptonight_double_hash<cryptonight_haven, false, false>,
 		cryptonight_double_hash<cryptonight_haven, true, false>,
@@ -835,6 +875,10 @@ minethd::cn_hash_fun_multi minethd::func_multi_selector(size_t N, bool bHaveAes,
 		cryptonight_penta_hash<cryptonight_haven, true, false>,
 		cryptonight_penta_hash<cryptonight_haven, false, true>,
 		cryptonight_penta_hash<cryptonight_haven, true, true>,
+		cryptonight_deca_hash<cryptonight_haven, false, false>,
+		cryptonight_deca_hash<cryptonight_haven, true, false>,
+		cryptonight_deca_hash<cryptonight_haven, false, true>,
+		cryptonight_deca_hash<cryptonight_haven, true, true>,
 
 		cryptonight_double_hash<cryptonight_bittube2, false, false>,
 		cryptonight_double_hash<cryptonight_bittube2, true, false>,
@@ -851,14 +895,19 @@ minethd::cn_hash_fun_multi minethd::func_multi_selector(size_t N, bool bHaveAes,
 		cryptonight_penta_hash<cryptonight_bittube2, false, false>,
 		cryptonight_penta_hash<cryptonight_bittube2, true, false>,
 		cryptonight_penta_hash<cryptonight_bittube2, false, true>,
-		cryptonight_penta_hash<cryptonight_bittube2, true, true>
+		cryptonight_penta_hash<cryptonight_bittube2, true, true>,
+		cryptonight_deca_hash<cryptonight_bittube2, false, false>,
+		cryptonight_deca_hash<cryptonight_bittube2, true, false>,
+		cryptonight_deca_hash<cryptonight_bittube2, false, true>,
+		cryptonight_deca_hash<cryptonight_bittube2, true, true>
+
 	};
 
 	std::bitset<2> digit;
 	digit.set(0, !bHaveAes);
 	digit.set(1, !bNoPrefetch);
 
-	return func_table[algv << 4 | (N-2) << 2 | digit.to_ulong()];
+	return func_table[algv * 20 | (NN-2) << 2 | digit.to_ulong()];
 }
 
 void minethd::double_work_main()
@@ -879,6 +928,10 @@ void minethd::quad_work_main()
 void minethd::penta_work_main()
 {
 	multiway_work_main<5u>();
+}
+
+void minethd::deca_work_main() {
+	multiway_work_main<10u>();
 }
 
 template<size_t N>
