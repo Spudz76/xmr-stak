@@ -4,6 +4,11 @@
 
 #include <stdlib.h>
 #include <string>
+#if defined(__APPLE__)
+#include <OpenCL/cl_platform.h>
+#else
+#include <CL/cl_platform.h>
+#endif
 
 namespace xmrstak
 {
@@ -22,16 +27,16 @@ public:
 	bool parse_config(const char* sFilename = params::inst().configFileAMD.c_str());
 
 	struct thd_cfg {
-		size_t index;
-		size_t intensity;
-		size_t w_size;
+		cl_uint index;
+		cl_uint intensity;
+		cl_uint w_size;
 		long long cpu_aff;
 		int stridedIndex;
 		int memChunk;
 		bool compMode;
 	};
 
-	size_t GetThreadCount();
+	cl_uint GetThreadCount();
 	bool GetThreadConfig(size_t id, thd_cfg &cfg);
 
 	size_t GetPlatformIdx();

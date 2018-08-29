@@ -1054,7 +1054,7 @@ void minethd::multiway_work_main()
 				if (*piHashVal[i] < oWork.iTarget)
 				{
 					executor::inst()->push_event(
-						ex_event(job_result(oWork.sJobID, iNonce - N + i, bHashOut + 32 * i, iThreadNo, miner_algo),
+						ex_event(job_result(oWork.sJobID, (uint32_t)(iNonce - N + i), bHashOut + 32 * i, iThreadNo, miner_algo),
 						oWork.iPoolId)
 					);
 				}

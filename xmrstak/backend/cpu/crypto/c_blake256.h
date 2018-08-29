@@ -28,8 +28,8 @@ void blake224_hash(uint8_t *, const uint8_t *, uint32_t);
 
 /* HMAC functions: */
 
-void hmac_blake256_init(hmac_state *, const uint8_t *, uint64_t);
-void hmac_blake224_init(hmac_state *, const uint8_t *, uint64_t);
+void hmac_blake256_init(hmac_state *, const uint8_t *, uint32_t);
+void hmac_blake224_init(hmac_state *, const uint8_t *, uint32_t);
 
 void hmac_blake256_update(hmac_state *, const uint8_t *, uint32_t);
 void hmac_blake224_update(hmac_state *, const uint8_t *, uint32_t);
@@ -37,7 +37,7 @@ void hmac_blake224_update(hmac_state *, const uint8_t *, uint32_t);
 void hmac_blake256_final(hmac_state *, uint8_t *);
 void hmac_blake224_final(hmac_state *, uint8_t *);
 
-void hmac_blake256_hash(uint8_t *, const uint8_t *, uint64_t, const uint8_t *, uint32_t);
-void hmac_blake224_hash(uint8_t *, const uint8_t *, uint64_t, const uint8_t *, uint32_t);
+void hmac_blake256_hash(uint8_t *, const uint8_t *, uint32_t, const uint8_t *, uint32_t);
+void hmac_blake224_hash(uint8_t *, const uint8_t *, uint32_t, const uint8_t *, uint32_t);
 
 #endif /* _BLAKE256_H_ */

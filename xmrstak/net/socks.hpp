@@ -27,7 +27,7 @@ inline void sock_close(SOCKET s)
 	closesocket(s);
 }
 
-inline const char* sock_strerror(char* buf, size_t len)
+inline const char* sock_strerror(char* buf, DWORD len)
 {
 	buf[0] = '\0';
 
@@ -40,7 +40,7 @@ inline const char* sock_strerror(char* buf, size_t len)
 	return buf;
 }
 
-inline const char* sock_gai_strerror(int err, char* buf, size_t len)
+inline const char* sock_gai_strerror(int err, char* buf, DWORD len)
 {
 	buf[0] = '\0';
 

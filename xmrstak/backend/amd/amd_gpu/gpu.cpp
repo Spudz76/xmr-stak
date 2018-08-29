@@ -64,7 +64,7 @@ static inline std::string get_home()
 		return ".";
 }
 
-static inline void port_sleep(size_t sec)
+static inline void port_sleep(DWORD sec)
 {
 	Sleep(sec * 1000);
 }
@@ -271,7 +271,7 @@ char* LoadTextFile(const char* filename)
 	return out;
 }
 
-size_t InitOpenCLGpu(cl_context opencl_ctx, GpuContext* ctx, const char* source_code)
+cl_int InitOpenCLGpu(cl_context opencl_ctx, GpuContext* ctx, const char* source_code)
 {
 	size_t MaximumWorkSize;
 	cl_int ret;
@@ -385,8 +385,8 @@ size_t InitOpenCLGpu(cl_context opencl_ctx, GpuContext* ctx, const char* source_
 	{
 		// scratchpad size for the selected mining algorithm
 		size_t hashMemSize = cn_select_memory(miner_algo[ii]);
-		int threadMemMask = cn_select_mask(miner_algo[ii]);
-		int hashIterations = cn_select_iter(miner_algo[ii]);
+		auto threadMemMask = (int)cn_select_mask(miner_algo[ii]);
+		auto hashIterations = (int)cn_select_iter(miner_algo[ii]);
 
 		char options[512];
 		snprintf(options, sizeof(options),
@@ -665,7 +665,7 @@ std::vector<GpuContext> getAMDDevices(int index)
 		return ctxVec;
 	}
 
-	for (size_t k = 0; k < num_devices; k++)
+	for (cl_uint k = 0; k < num_devices; k++)
 	{
 		std::vector<char> devVendorVec(1024);
 		if((clStatus = clGetDeviceInfo(device_list[k], CL_DEVICE_VENDOR, devVendorVec.size(), devVendorVec.data(), NULL)) != CL_SUCCESS)
@@ -751,7 +751,7 @@ int getAMDPlatformIdx()
 
 	if(clStatus == CL_SUCCESS)
 	{
-		for (int i = 0; i < numPlatforms; i++) {
+		for (uint32_t i = 0; i < numPlatforms; i++) {
 			size_t infoSize;
 			clGetPlatformInfo(platforms[i], CL_PLATFORM_VENDOR, 0, NULL, &infoSize);
 			std::vector<char> platformNameVec(infoSize);
@@ -794,7 +794,7 @@ int getAMDPlatformIdx()
 // RequestedDeviceIdxs is a list of OpenCL device indexes
 // NumDevicesRequested is number of devices in RequestedDeviceIdxs list
 // Returns 0 on success, -1 on stupid params, -2 on OpenCL API error
-size_t InitOpenCL(GpuContext* ctx, size_t num_gpus, size_t platform_idx)
+cl_int InitOpenCL(GpuContext* ctx, cl_uint num_gpus, size_t platform_idx)
 {
 
 	cl_context opencl_ctx;
@@ -844,7 +844,7 @@ size_t InitOpenCL(GpuContext* ctx, size_t num_gpus, size_t platform_idx)
 	}
 
 	// Same as the platform index sanity check, except we must check all requested device indexes
-	for(int i = 0; i < num_gpus; ++i)
+	for(cl_uint i = 0; i < num_gpus; ++i)
 	{
 		if(entries <= ctx[i].deviceIdx)
 		{
@@ -870,7 +870,7 @@ size_t InitOpenCL(GpuContext* ctx, size_t num_gpus, size_t platform_idx)
 #else
 	cl_device_id* TempDeviceList = (cl_device_id*)_alloca(entries * sizeof(cl_device_id));
 #endif
-	for(int i = 0; i < num_gpus; ++i)
+	for(cl_uint i = 0; i < num_gpus; ++i)
 	{
 		ctx[i].DeviceID = DeviceIDList[ctx[i].deviceIdx];
 		TempDeviceList[i] = DeviceIDList[ctx[i].deviceIdx];
@@ -914,11 +914,11 @@ size_t InitOpenCL(GpuContext* ctx, size_t num_gpus, size_t platform_idx)
 	// create a directory  for the OpenCL compile cache
 	create_directory(get_home() + "/.openclcache");
 
-	for(int i = 0; i < num_gpus; ++i)
+	for(cl_uint i = 0; i < num_gpus; ++i)
 	{
 		if(ctx[i].stridedIndex == 2 && (ctx[i].rawIntensity % ctx[i].workSize) != 0)
 		{
-			size_t reduced_intensity = (ctx[i].rawIntensity / ctx[i].workSize) * ctx[i].workSize;
+			uint32_t reduced_intensity = (ctx[i].rawIntensity / ctx[i].workSize) * ctx[i].workSize;
 			ctx[i].rawIntensity = reduced_intensity;
 			const std::string backendName = xmrstak::params::inst().openCLVendor;
 			printer::inst()->print_msg(L0, "WARNING %s: gpu %d intensity is not a multiple of 'worksize', auto reduce intensity to %d", backendName.c_str(), ctx[i].deviceIdx, int(reduced_intensity));
@@ -1219,7 +1219,7 @@ size_t XMRRunJob(GpuContext* ctx, cl_uint* HashOutput, xmrstak_algo miner_algo)
 	// avoid out of memory read, we have only storage for 0xFF results
 	if(numHashValues > 0xFF)
 		numHashValues = 0xFF;
-	ctx->Nonce += g_intensity;
+	ctx->Nonce += (uint32_t)g_intensity;
 
 	return ERR_SUCCESS;
 }

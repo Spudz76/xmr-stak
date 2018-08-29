@@ -158,7 +158,7 @@ bool jconf::GetPoolConfig(size_t id, pool_cfg& cfg)
 
 	typedef const Value* cval;
 	cval jaddr, jlogin, jrigid, jpasswd, jnicehash, jtls, jtlsfp, jwt;
-	const Value& oThdConf = prv->configValues[aPoolList]->GetArray()[id];
+	const Value& oThdConf = prv->configValues[aPoolList]->GetArray()[(rapidjson::SizeType)id];
 
 	/* We already checked presence and types */
 	jaddr = GetObjectMember(oThdConf, "pool_address");

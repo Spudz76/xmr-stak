@@ -244,7 +244,7 @@ bool jpsock::jpsock_thd_main()
 	executor::inst()->push_event(ex_event(EV_SOCK_READY, pool_id));
 
 	char buf[iSockBufferSize];
-	size_t datalen = 0;
+	unsigned int datalen = 0;
 	while (true)
 	{
 		int ret = sck->recv(buf + datalen, sizeof(buf) - datalen);
@@ -265,7 +265,12 @@ bool jpsock::jpsock_thd_main()
 		while ((lnend = (char*)memchr(lnstart, '\n', datalen)) != nullptr)
 		{
 			lnend++;
-			int lnlen = lnend - lnstart;
+#ifdef _WIN32
+#define INT64 __int64
+#else
+#define INT64 __int64_t
+#endif
+			INT64 lnlen = lnend - lnstart;
 
 			if (!process_line(lnstart, lnlen))
 			{
@@ -273,7 +278,7 @@ bool jpsock::jpsock_thd_main()
 				return false;
 			}
 
-			datalen -= lnlen;
+			datalen -= (unsigned int)lnlen;
 			lnstart = lnend;
 		}
 
@@ -621,7 +626,7 @@ bool jpsock::cmd_login()
 
 	if(ext != nullptr && ext->IsArray())
 	{
-		for(size_t i=0; i < ext->Size(); i++)
+		for(rapidjson::SizeType i=0; i < ext->Size(); i++)
 		{
 			const Value& jextname = ext->GetArray()[i];
 

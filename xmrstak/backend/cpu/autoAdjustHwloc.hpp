@@ -202,7 +202,7 @@ private:
 				PUs--;
 
 				allocated_pu = true;
-				results.emplace_back(os_id);
+				results.emplace_back((unsigned int)os_id);
 
 				if(cacheHashes == 0)
 					break;

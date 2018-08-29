@@ -388,7 +388,7 @@ int main(int argc, char *argv[])
 	OpenSSL_add_all_digests();
 #endif
 
-	srand(time(0));
+	srand((unsigned int)time(0));
 
 	using namespace xmrstak;
 
@@ -756,14 +756,11 @@ int main(int argc, char *argv[])
 	if(jconf::inst()->GetHttpdPort() != uint16_t(params::httpd_port_disabled))
 	{
 #ifdef CONF_NO_HTTPD
-		printer::inst()->print_msg(L0, "HTTPD port is enabled but this binary was compiled without HTTP support!");
-		win_exit();
-		return 1;
+		printer::inst()->print_msg(L0, "WARNING: HTTPD port is enabled but this binary was compiled without HTTP support!  Ignoring...");
 #else
 		if (!httpd::inst()->start_daemon())
 		{
-			win_exit();
-			return 1;
+			printer::inst()->print_msg(L0, "WARNING: HTTPD port is enabled but the port is in use?  Ignoring...");
 		}
 #endif
 	}
@@ -862,7 +859,7 @@ int do_benchmark(int block_version, int wait_sec, int work_sec)
 	double fTotalHps = 0.0;
 	for (uint32_t i = 0; i < pvThreads->size(); i++)
 	{
-		double fHps = pvThreads->at(i)->iHashCount;
+		double fHps = (double)(pvThreads->at(i)->iHashCount);
 		fHps /= (pvThreads->at(i)->iTimestamp - iStartStamp) / 1000.0;
 
 		auto bType = static_cast<xmrstak::iBackend::BackendType>(pvThreads->at(i)->backendType);

@@ -103,7 +103,7 @@ bool jconf::GetThreadConfig(size_t id, thd_cfg &cfg)
 	if(id >= prv->configValues[aCpuThreadsConf]->Size())
 		return false;
 
-	const Value& oThdConf = prv->configValues[aCpuThreadsConf]->GetArray()[id];
+	const Value& oThdConf = prv->configValues[aCpuThreadsConf]->GetArray()[(rapidjson::SizeType)id];
 
 	if(!oThdConf.IsObject())
 		return false;

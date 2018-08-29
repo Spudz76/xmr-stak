@@ -41,7 +41,7 @@ static inline uint64_t _umul128(uint64_t a, uint64_t b, uint64_t* hi)
 
 extern "C"
 {
-	void keccak(const uint8_t *in, int inlen, uint8_t *md, int mdlen);
+	void keccak(const uint8_t *in, size_t inlen, uint8_t *md, int mdlen);
 	void keccakf(uint64_t st[25], int rounds);
 	extern void(*const extra_hashes[4])(const void *, uint32_t, char *);
 }

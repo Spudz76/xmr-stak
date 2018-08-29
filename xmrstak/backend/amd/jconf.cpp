@@ -101,7 +101,7 @@ bool jconf::GetThreadConfig(size_t id, thd_cfg &cfg)
 	if(id >= prv->configValues[aGpuThreadsConf]->Size())
 		return false;
 
-	const Value& oThdConf = prv->configValues[aGpuThreadsConf]->GetArray()[id];
+	const Value& oThdConf = prv->configValues[aGpuThreadsConf]->GetArray()[(rapidjson::SizeType)id];
 
 	if(!oThdConf.IsObject())
 		return false;
@@ -153,9 +153,9 @@ bool jconf::GetThreadConfig(size_t id, thd_cfg &cfg)
 	if(!compMode->IsBool())
 		return false;
 
-	cfg.index = idx->GetUint64();
-	cfg.w_size = w_size->GetUint64();
-	cfg.intensity = intensity->GetUint64();
+	cfg.index = idx->GetUint();
+	cfg.w_size = w_size->GetUint();
+	cfg.intensity = intensity->GetUint();
 	cfg.compMode = compMode->GetBool();
 
 	if(aff->IsNumber())
@@ -171,7 +171,7 @@ size_t jconf::GetPlatformIdx()
 	return prv->configValues[iPlatformIdx]->GetUint64();
 }
 
-size_t jconf::GetThreadCount()
+cl_uint jconf::GetThreadCount()
 {
 	return prv->configValues[aGpuThreadsConf]->Size();
 }

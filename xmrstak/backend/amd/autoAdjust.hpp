@@ -56,10 +56,7 @@ public:
 
 		devVec = getAMDDevices(platformIndex);
 
-
-		int deviceCount = devVec.size();
-
-		if(deviceCount == 0)
+		if(devVec.size() == 0)
 		{
 			printer::inst()->print_msg(L0,"WARNING: No AMD device found.");
 			return false;

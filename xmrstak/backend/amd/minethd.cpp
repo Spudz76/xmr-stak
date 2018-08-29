@@ -84,7 +84,7 @@ std::vector<iBackend*>* xmrstak_start_backend(uint32_t threadOffset, miner_work&
 
 bool minethd::init_gpus()
 {
-	size_t i, n = jconf::inst()->GetThreadCount();
+	cl_uint i, n = jconf::inst()->GetThreadCount();
 
 	printer::inst()->print_msg(L1, "Compiling code and initializing GPUs. This will take a while...");
 	vGpuData.resize(n);
