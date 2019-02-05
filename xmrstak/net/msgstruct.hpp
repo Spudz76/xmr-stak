@@ -1,6 +1,7 @@
 #pragma once
 
 #include "xmrstak/backend/cryptonight.hpp"
+#include "xmrstak/backend/miner_work.hpp"
 
 #include <assert.h>
 #include <string.h>
@@ -12,7 +13,7 @@
 struct pool_job
 {
 	char sJobID[64];
-	uint8_t bWorkBlob[128];
+	uint8_t bWorkBlob[MAXWORKSIZE];
 	uint64_t iTarget;
 	uint32_t iWorkLen;
 	uint32_t iSavedNonce;

@@ -366,7 +366,7 @@ __forceinline__ __device__ void round_compute(__m128 n0, __m128 n1, __m128 n2, _
 }
 
 // 74*8 = 595
-__forceinline__ __device__ __m128i single_comupte(__m128 n0, __m128 n1, __m128 n2, __m128 n3, float cnt, __m128 rnd_c, __m128& sum)
+__forceinline__ __device__ __m128i single_compute(__m128 n0, __m128 n1, __m128 n2, __m128 n3, float cnt, __m128 rnd_c, __m128& sum)
 {
 	__m128 c(cnt);
 	// 35 maths calls follow (140 FLOPS)
@@ -381,14 +381,14 @@ __forceinline__ __device__ __m128i single_comupte(__m128 n0, __m128 n1, __m128 n
 	return r.get_int();
 }
 
-__forceinline__ __device__ void single_comupte_wrap(const uint32_t rot, const __m128i& v0, const __m128i& v1, const __m128i& v2, const __m128i& v3, float cnt, __m128 rnd_c, __m128& sum, __m128i& out)
+__forceinline__ __device__ void single_compute_wrap(const uint32_t rot, const __m128i& v0, const __m128i& v1, const __m128i& v2, const __m128i& v3, float cnt, __m128 rnd_c, __m128& sum, __m128i& out)
 {
 	__m128 n0(v0);
 	__m128 n1(v1);
 	__m128 n2(v2);
 	__m128 n3(v3);
 
-	__m128i r = single_comupte(n0, n1, n2, n3, cnt, rnd_c, sum);
+	__m128i r = single_compute(n0, n1, n2, n3, cnt, rnd_c, sum);
 	out = rot == 0 ? r : _mm_alignr_epi8(r, rot);
 }
 
@@ -496,7 +496,7 @@ __global__ void cryptonight_core_gpu_phase2_gpu(
 		sync();
 
 		__m128 rc = vs;
-		single_comupte_wrap(
+		single_compute_wrap(
 			tidm,
 			*(smem->out + look[tid][0]),
 			*(smem->out + look[tid][1]),

@@ -145,7 +145,7 @@ std::vector<iBackend*>* minethd::thread_starter(uint32_t threadOffset, miner_wor
 	}
 	else
 	{
-		std::cout << "NVIDIA: found " << deviceCount << " potential device's" << std::endl;
+		std::cout << "NVIDIA: found " << deviceCount << " potential devices" << std::endl;
 	}
 
 	size_t i, n = jconf::inst()->GetGPUThreadCount();
@@ -208,7 +208,7 @@ void minethd::work_main()
 	cpu::minethd::cn_on_new_job set_job;
 	cpu::minethd::func_multi_selector<1>(&cpu_ctx, set_job, ::jconf::inst()->HaveHardwareAes(), true /*bNoPrefetch*/, miner_algo);
 
-	uint32_t iNonce;
+	uint32_t iNonce = 0;
 
 	uint8_t version = 0;
 	size_t lastPoolId = 0;
@@ -282,7 +282,7 @@ void minethd::work_main()
 			for(size_t i = 0; i < foundCount; i++)
 			{
 
-				uint8_t bWorkBlob[128];
+				uint8_t bWorkBlob[MAXWORKSIZE];
 				uint8_t bResult[32];
 
 				memcpy(bWorkBlob, oWork.bWorkBlob, oWork.iWorkSize);

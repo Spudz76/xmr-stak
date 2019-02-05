@@ -35,6 +35,25 @@ if(${CMAKE_CXX_COMPILER_ID} STREQUAL "GNU")
     if(CMAKE_CXX_COMPILER_VERSION VERSION_LESS 5.1)
         message(FATAL_ERROR "g++ version must be at least 5.1!")
     endif()
+elseif(CMAKE_CXX_COMPILER_ID MATCHES "Intel")
+    #include_directories(BEFORE "/opt/intel/include")
+    #add_definitions(-D__PURE_INTEL_C99_HEADERS__)
+    #link_directories(BEFORE "/opt/intel/lib")
+    if((CMAKE_CXX_COMPILER_VERSION VERSION_GREATER 17) AND (CMAKE_CXX_COMPILER_VERSION VERSION_LESS 20))
+        # locate best gcc version to pass to icc-18 (gcc-8 doesn't work, for example)
+        # Use -DICC_GCCVER=6 for example to force 'gcc-6' and 'g++-6'
+        # Otherwise, the newest available and compatible pair will be selected
+        find_program(ICC_GXX NAMES "g++-${ICC_GCCVER}" "g++-7" "g++-6" "g++")
+        get_filename_component(ICC_GXX ${ICC_GXX} NAME)
+        find_program(ICC_GCC NAMES "gcc-${ICC_GCCVER}" "gcc-7" "gcc-6" "gcc")
+        get_filename_component(ICC_GCC ${ICC_GCC} NAME)
+        set(ICC_COMPILERS "-gxx-name=${ICC_GXX} -gcc-name=${ICC_GCC}")
+        unset(ICC_GXX)
+        unset(ICC_GCC)
+    endif()
+    message(STATUS "Intel ICC subcompiler flags: ${ICC_COMPILERS}")
+    set(CMAKE_CXX_FLAGS "-std=gnu++11 ${ICC_COMPILERS}")
+    set(CMAKE_C_FLAGS "-std=gnu99 ${ICC_COMPILERS}")
 endif()
 
 set(BUILD_TYPE "Release;Debug")
@@ -46,7 +65,16 @@ set_property(CACHE CMAKE_BUILD_TYPE PROPERTY STRINGS "${BUILD_TYPE}")
 set(XMR-STAK_COMPILE "native" CACHE STRING "select CPU compute architecture")
 set_property(CACHE XMR-STAK_COMPILE PROPERTY STRINGS "native;generic;dev_release")
 if(XMR-STAK_COMPILE STREQUAL "native")
-    if(NOT CMAKE_CXX_COMPILER_ID MATCHES "MSVC")
+    if(CMAKE_CXX_COMPILER_ID MATCHES "Intel")
+        # activate Intel Compiler options: optimize for current host CPU
+        set(CMAKE_CXX_FLAGS "-xHost -O3 -ipo -no-prec-div -fp-model fast=2 -funroll-loops -fno-rtti ${CMAKE_CXX_FLAGS}")
+        set(CMAKE_C_FLAGS "-xHost -O3 -ipo -no-prec-div -fp-model fast=2 -funroll-loops ${CMAKE_C_FLAGS}")
+    elseif(CMAKE_CXX_COMPILER_ID MATCHES "MSVC")
+        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /EHsc")
+        set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} /EHsc")
+        set(CMAKE_MODULE_LINKER_FLAGS "${CMAKE_MODULE_LINKER_FLAGS} /LTCG /NODEFAULTLIB:libcmt")
+        set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} /LTCG /NODEFAULTLIB:libcmt")
+    else()
         set(CMAKE_CXX_FLAGS "-march=native -mtune=native ${CMAKE_CXX_FLAGS}")
         set(CMAKE_C_FLAGS "-march=native -mtune=native ${CMAKE_C_FLAGS}")
     endif()
@@ -149,6 +177,8 @@ if(CUDA_ENABLE)
         if(NOT CUDA_VERSION VERSION_LESS 10.0)
             list(APPEND DEFAULT_CUDA_ARCH "75")
         endif()
+        list(SORT DEFAULT_CUDA_ARCH)
+        list(REVERSE DEFAULT_CUDA_ARCH)
 
         set(CUDA_ARCH "${DEFAULT_CUDA_ARCH}" CACHE STRING "Set GPU architecture (semicolon separated list, e.g. '-DCUDA_ARCH=20;35;60')")
 
@@ -192,9 +222,11 @@ if(CUDA_ENABLE)
                 set(CLANG_BUILD_FLAGS "${CLANG_BUILD_FLAGS} --cuda-gpu-arch=sm_${CUDA_ARCH_ELEM}")
             endforeach()
         elseif(CUDA_COMPILER STREQUAL "nvcc")
-            # add c++11 for cuda
-            if(NOT CMAKE_CXX_FLAGS MATCHES "-std=c\\+\\+11")
-                set(CUDA_NVCC_FLAGS "${CUDA_NVCC_FLAGS} -std=c++11")
+            if(NOT CMAKE_CXX_COMPILER_ID MATCHES "MSVC")
+                # add c++11 for cuda, except Windows
+                if(NOT CMAKE_CXX_FLAGS MATCHES "-std=c\\+\\+11")
+                    set(CUDA_NVCC_FLAGS "${CUDA_NVCC_FLAGS} -std=c++11")
+                endif()
             endif()
 
             # required for cryptonight_gpu (fast floating point operations are not allowed)
@@ -320,11 +352,17 @@ else()
 endif()
 
 ################################################################################
-# Explicit march setting for Clang
+# Tune CN-GPU compilation
 ################################################################################
 
-if ("${CMAKE_CXX_COMPILER_ID}" MATCHES "Clang")
-    set_source_files_properties(xmrstak/backend/cpu/crypto/cn_gpu_avx.cpp PROPERTIES COMPILE_FLAGS "-mavx2")
+if (CMAKE_CXX_COMPILER_ID MATCHES MSVC)
+    set_source_files_properties(xmrstak/backend/cpu/crypto/cn_gpu_avx.cpp PROPERTIES COMPILE_FLAGS "/arch:AVX")
+elseif (CMAKE_CXX_COMPILER_ID MATCHES Intel)
+    set_source_files_properties(xmrstak/backend/cpu/crypto/cn_gpu_avx.cpp PROPERTIES COMPILE_FLAGS "-O3 -mavx2")
+    set_source_files_properties(xmrstak/backend/cpu/crypto/cn_gpu_ssse3.cpp PROPERTIES COMPILE_FLAGS "-O3 -msse -msse2 -mfpmath=sse")
+else()
+    set_source_files_properties(xmrstak/backend/cpu/crypto/cn_gpu_avx.cpp PROPERTIES COMPILE_FLAGS "-O3 -mavx2")
+    set_source_files_properties(xmrstak/backend/cpu/crypto/cn_gpu_ssse3.cpp PROPERTIES COMPILE_FLAGS "-O3 -msse -msse2 -mfpmath=sse")
 endif()
 
 ################################################################################
@@ -477,7 +515,7 @@ if(CMAKE_CXX_COMPILER_ID MATCHES "MSVC")
     add_definitions(-D_CRT_SECURE_NO_DEPRECATE)
     # disable min define to allow usage of std::min
     add_definitions(-DNOMINMAX)
-else()
+elseif(NOT CMAKE_CXX_COMPILER_ID MATCHES "Intel")
     # activate sse2 and aes-ni
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -msse2 -maes")
     set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -msse2 -maes")
@@ -507,6 +545,8 @@ if(CMAKE_LINK_STATIC)
     set(CMAKE_FIND_LIBRARY_SUFFIXES ".a")
     if(${CMAKE_CXX_COMPILER_ID} STREQUAL "GNU" OR ${CMAKE_C_COMPILER_ID} STREQUAL "GNU")
         set(LIBS "-static-libgcc -static-libstdc++ ${LIBS}")
+    elseif(CMAKE_CXX_COMPILER_ID MATCHES "Intel")
+        set(LIBS "-static-libgcc -static-libstdc++ -static-intel ${LIBS}")
     endif()
 endif()
 
@@ -537,7 +577,13 @@ endif()
 set_property(TARGET xmr-stak-asm PROPERTY LINKER_LANGUAGE C)
 
 # compile C files
-file(GLOB SRCFILES_C "xmrstak/backend/cpu/crypto/*.c")
+set(SRCFILES_C
+    "xmrstak/backend/cpu/crypto/c_blake256.c"
+    "xmrstak/backend/cpu/crypto/c_groestl.c"
+    "xmrstak/backend/cpu/crypto/c_jh.c"
+    "xmrstak/backend/cpu/crypto/c_keccak.c"
+    "xmrstak/backend/cpu/crypto/c_skein.c"
+)
 
 add_library(xmr-stak-c
     STATIC
@@ -550,14 +596,29 @@ endif()
 target_link_libraries(xmr-stak-c ${LIBS} xmr-stak-asm)
 
 # compile generic backend files
-file(GLOB BACKEND_CPP
-    "xmrstak/*.cpp"
-    "xmrstak/backend/cpu/*.cpp"
-    "xmrstak/backend/*.cpp"
-    "xmrstak/backend/cpu/crypto/*.cpp"
-    "xmrstak/http/*.cpp"
-    "xmrstak/misc/*.cpp"
-    "xmrstak/net/*.cpp")
+set(BACKEND_CPP
+    "xmrstak/jconf.cpp"
+    "xmrstak/version.cpp"
+    "xmrstak/backend/cpu/cpuType.cpp"
+    "xmrstak/backend/cpu/hwlocMemory.cpp"
+    "xmrstak/backend/cpu/jconf.cpp"
+    "xmrstak/backend/cpu/minethd.cpp"
+    "xmrstak/backend/backendConnector.cpp"
+    "xmrstak/backend/globalStates.cpp"
+    "xmrstak/backend/cpu/crypto/cn_gpu_avx.cpp"
+    "xmrstak/backend/cpu/crypto/cn_gpu_ssse3.cpp"
+    "xmrstak/backend/cpu/crypto/cryptonight_common.cpp"
+    "xmrstak/backend/cpu/crypto/CryptonightR_gen.cpp"
+    "xmrstak/http/httpd.cpp"
+    "xmrstak/http/webdesign.cpp"
+    "xmrstak/misc/console.cpp"
+    "xmrstak/misc/executor.cpp"
+    "xmrstak/misc/telemetry.cpp"
+    "xmrstak/misc/uac.cpp"
+    "xmrstak/misc/utility.cpp"
+    "xmrstak/net/jpsock.cpp"
+    "xmrstak/net/socket.cpp"
+)
 
 add_library(xmr-stak-backend
     STATIC
@@ -567,24 +628,35 @@ target_link_libraries(xmr-stak-backend xmr-stak-c ${CMAKE_DL_LIBS} xmr-stak-asm)
 
 # compile CUDA backend
 if(CUDA_FOUND)
-    file(GLOB CUDASRCFILES
-        "xmrstak/backend/nvidia/nvcc_code/*.cu"
-        "xmrstak/backend/nvidia/*.cpp")
+    set(CUDASRCFILES
+        "xmrstak/backend/nvidia/nvcc_code/cuda_core.cu"
+        "xmrstak/backend/nvidia/nvcc_code/cuda_extra.cu"
+        "xmrstak/backend/nvidia/CudaCryptonightR_gen.cpp"
+        "xmrstak/backend/nvidia/jconf.cpp"
+        "xmrstak/backend/nvidia/minethd.cpp"
+    )
+
+    string(REPLACE "." "" CUDA_VERSION_PAD "${CUDA_VERSION}")
+    string(LENGTH "${CUDA_VERSION_PAD}" CVP_LEN)
+    if(CVP_LEN EQUAL 2)
+        set(CUDA_VERSION_PAD "0${CUDA_VERSION_PAD}")
+    endif()
+    set(XMRSTAK_CUDA_BACKEND "xmr-stak-cuda${CUDA_VERSION_PAD}")
 
     if(CUDA_COMPILER STREQUAL "clang")
         # build device code with clang
         add_library(
-            xmrstak_cuda_backend
+            ${XMRSTAK_CUDA_BACKEND}
             SHARED
             ${CUDASRCFILES}
         )
-        set_target_properties(xmrstak_cuda_backend PROPERTIES COMPILE_FLAGS ${CLANG_BUILD_FLAGS})
-        set_target_properties(xmrstak_cuda_backend PROPERTIES LINKER_LANGUAGE CXX)
+        set_target_properties(${XMRSTAK_CUDA_BACKEND} PROPERTIES COMPILE_FLAGS ${CLANG_BUILD_FLAGS})
+        set_target_properties(${XMRSTAK_CUDA_BACKEND} PROPERTIES LINKER_LANGUAGE CXX)
         set_source_files_properties(${CUDASRCFILES} PROPERTIES LANGUAGE CXX)
     else()
         #  build device code with nvcc
         cuda_add_library(
-            xmrstak_cuda_backend
+            ${XMRSTAK_CUDA_BACKEND}
             SHARED
             ${CUDASRCFILES}
         )
@@ -600,32 +672,37 @@ if(CUDA_FOUND)
         set(CUDA_LIBRARIES ${CUDA_LIBRARIES} ${CUDA_NVRTC_LIB})
     endif()
     
-    target_link_libraries(xmrstak_cuda_backend ${CUDA_LIBRARIES})
-    target_link_libraries(xmrstak_cuda_backend xmr-stak-backend xmr-stak-asm)
+    target_link_libraries(${XMRSTAK_CUDA_BACKEND} ${CUDA_LIBRARIES})
+    target_link_libraries(${XMRSTAK_CUDA_BACKEND} xmr-stak-backend xmr-stak-asm)
 endif()
 
 # compile AMD backend
 if(OpenCL_FOUND)
-    file(GLOB OPENCLSRCFILES
-        "xmrstak/backend/amd/amd_gpu/*.cpp"
-        "xmrstak/backend/amd/*.cpp")
-    add_library(xmrstak_opencl_backend
+    set(XMRSTAK_OPENCL_BACKEND "xmr-stak-opencl")
+    set(OPENCLSRCFILES
+        "xmrstak/backend/amd/amd_gpu/gpu.cpp"
+        "xmrstak/backend/amd/OclCryptonightR_gen.cpp"
+        "xmrstak/backend/amd/jconf.cpp"
+        "xmrstak/backend/amd/minethd.cpp"
+    )
+    add_library(${XMRSTAK_OPENCL_BACKEND}
         SHARED
         ${OPENCLSRCFILES}
     )
-    target_link_libraries(xmrstak_opencl_backend ${OpenCL_LIBRARY} )
-    target_link_libraries(xmrstak_opencl_backend xmr-stak-backend xmr-stak-asm)
+    target_link_libraries(${XMRSTAK_OPENCL_BACKEND} ${OpenCL_LIBRARY} )
+    target_link_libraries(${XMRSTAK_OPENCL_BACKEND} xmr-stak-backend xmr-stak-asm)
 endif()
 
 # compile final binary
-file(GLOB SRCFILES_CPP "xmrstak/cli/*.cpp")
+set(SRCFILES_CPP
+    "xmrstak/cli/cli-miner.cpp"
+)
 set_source_files_properties(${SRCFILES_CPP} PROPERTIES LANGUAGE CXX)
 
 if(CMAKE_CXX_COMPILER_ID MATCHES "MSVC")
-    add_executable(xmr-stak ${SRCFILES_CPP} xmrstak/cli/xmr-stak.manifest)
-else()
-    add_executable(xmr-stak ${SRCFILES_CPP})
+    list(APPEND SRCFILES_CPP "xmrstak/cli/xmr-stak.manifest")
 endif()
+add_executable(xmr-stak ${SRCFILES_CPP})
 
 set(EXECUTABLE_OUTPUT_PATH "bin" CACHE STRING "Path to place executables relative to ${CMAKE_INSTALL_PREFIX}")
 set(LIBRARY_OUTPUT_PATH "bin" CACHE STRING "Path to place libraries relative to ${CMAKE_INSTALL_PREFIX}")
@@ -642,19 +719,19 @@ if( NOT CMAKE_INSTALL_PREFIX STREQUAL PROJECT_BINARY_DIR )
             RUNTIME DESTINATION "${CMAKE_INSTALL_PREFIX}/${EXECUTABLE_OUTPUT_PATH}")
     if(CUDA_FOUND)
         if(WIN32)
-            install(TARGETS xmrstak_cuda_backend
+            install(TARGETS ${XMRSTAK_CUDA_BACKEND}
                 RUNTIME DESTINATION "${CMAKE_INSTALL_PREFIX}/${LIBRARY_OUTPUT_PATH}")
         else()
-            install(TARGETS xmrstak_cuda_backend
+            install(TARGETS ${XMRSTAK_CUDA_BACKEND}
                 LIBRARY DESTINATION "${CMAKE_INSTALL_PREFIX}/${LIBRARY_OUTPUT_PATH}")
         endif()
     endif()
     if(OpenCL_FOUND)
         if(WIN32)
-            install(TARGETS xmrstak_opencl_backend
+            install(TARGETS ${XMRSTAK_OPENCL_BACKEND}
                 RUNTIME DESTINATION "${CMAKE_INSTALL_PREFIX}/${LIBRARY_OUTPUT_PATH}")
         else()
-            install(TARGETS xmrstak_opencl_backend
+            install(TARGETS ${XMRSTAK_OPENCL_BACKEND}
                 LIBRARY DESTINATION "${CMAKE_INSTALL_PREFIX}/${LIBRARY_OUTPUT_PATH}")
         endif()
     endif()

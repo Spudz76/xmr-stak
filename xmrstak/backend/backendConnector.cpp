@@ -64,7 +64,7 @@ std::vector<iBackend*>* BackendConnector::thread_starter(miner_work& pWork)
 	{
 		const std::string backendName = xmrstak::params::inst().openCLVendor;
 		plugin amdplugin;
-		amdplugin.load(backendName, "xmrstak_opencl_backend");
+		amdplugin.load(backendName, "xmr-stak-opencl");
 		std::vector<iBackend*>* amdThreads = amdplugin.startBackend(static_cast<uint32_t>(pvThreads->size()), pWork, environment::inst());
 		size_t numWorkers = 0u;
 		if(amdThreads != nullptr)
@@ -85,7 +85,15 @@ std::vector<iBackend*>* BackendConnector::thread_starter(miner_work& pWork)
 
 		plugin nvidiaplugin;
 #ifdef XMRSTAK_DEV_RELEASE
-		std::vector<std::string> libNames = {"xmrstak_cuda_backend_cuda10_0", "xmrstak_cuda_backend"};
+		std::vector<std::string> libNames = {
+			"xmr-stak-cuda101",
+			"xmr-stak-cuda100",
+			"xmr-stak-cuda092",
+			"xmr-stak-cuda091",
+			"xmr-stak-cuda090",
+			"xmr-stak-cuda080",
+			"xmr-stak-cuda",
+		};
 #	ifndef _WIN32
 		auto neededAlgorithms = ::jconf::inst()->GetCurrentCoinSelection().GetAllAlgorithms();
 		bool cn_r_derivate =
@@ -107,7 +115,7 @@ std::vector<iBackend*>* BackendConnector::thread_starter(miner_work& pWork)
 		{
 			for(const auto& name : libNames)
 			{
-				printer::inst()->print_msg(L0, "NVIDIA: try to load library '%s'", name.c_str());
+				printer::inst()->print_msg(L0, "NVIDIA: probing library '%s'...", name.c_str());
 				nvidiaplugin.load("NVIDIA", name);
 				std::vector<iBackend*>* nvidiaThreads = nvidiaplugin.startBackend(static_cast<uint32_t>(pvThreads->size()), pWork, environment::inst());
 				if(nvidiaThreads != nullptr)
@@ -124,7 +132,9 @@ std::vector<iBackend*>* BackendConnector::thread_starter(miner_work& pWork)
 				// we found at leat one working GPU
 				if(numWorkers != 0)
 				{
-					printer::inst()->print_msg(L0, "NVIDIA: use library '%s'", name.c_str());
+					printer::inst()->print_msg(L0, "NVIDIA: using library '%s' for %d GPU%s",
+						name.c_str(), numWorkers, (numWorkers==1)?"":"s"
+					);
 					break;
 				}
 			}

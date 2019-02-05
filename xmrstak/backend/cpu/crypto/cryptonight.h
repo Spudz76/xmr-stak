@@ -4,7 +4,7 @@
 
 #include "variant4_random_math.h"
 
-#if defined _MSC_VER
+#if defined _MSC_VER || defined __INTEL_COMPILER
 #define ABI_ATTRIBUTE
 #else
 #define ABI_ATTRIBUTE __attribute__((ms_abi))

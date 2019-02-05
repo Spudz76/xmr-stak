@@ -276,6 +276,7 @@ bool minethd::self_test()
 
 	for(const auto algo : neededAlgorithms)
 	{
+		std::cout<<algo.Name()<< " test cn" <<std::endl;
 		if(algo == POW(cryptonight))
 		{
 			func_selector(ctx, ::jconf::inst()->HaveHardwareAes(), false, algo);
@@ -415,11 +416,7 @@ bool minethd::self_test()
 		}
 		else if(algo == POW(cryptonight_bittube2))
 		{
-			unsigned char out[32 * MAX_N];
-			cn_hash_fun hashf;
-
 			func_selector(ctx, ::jconf::inst()->HaveHardwareAes(), false, algo);
-
 			ctx[0]->hash_fn("\x38\x27\x4c\x97\xc4\x5a\x17\x2c\xfc\x97\x67\x98\x70\x42\x2e\x3a\x1a\xb0\x78\x49\x60\xc6\x05\x14\xd8\x16\x27\x14\x15\xc3\x06\xee\x3a\x3e\xd1\xa7\x7e\x31\xf6\xa8\x85\xc3\xcb\xff\x01\x02\x03\x04", 48, out, ctx, algo);
 			bResult = bResult && memcmp(out, "\x18\x2c\x30\x41\x93\x1a\x14\x73\xc6\xbf\x7e\x77\xfe\xb5\x17\x9b\xa8\xbe\xa9\x68\xba\x9e\xe1\xe8\x24\x1a\x12\x7a\xac\x81\xb4\x24", 32) == 0;
 
@@ -756,7 +753,7 @@ void minethd::func_multi_selector(cryptonight_ctx** ctx, minethd::cn_on_new_job&
 			patchAsmVariants<N>(selected_asm, ctx, algo);
 
 			if(asm_version_str == "auto" && (selected_asm != "intel_avx" || selected_asm != "amd_avx"))
-				printer::inst()->print_msg(L3, "Switch to assembler version for '%s' cpu's", selected_asm.c_str());
+				printer::inst()->print_msg(L3, "Switch to assembler version for '%s' cpus", selected_asm.c_str());
 			else if(selected_asm != "intel_avx" && selected_asm != "amd_avx") // unknown asm type
 				printer::inst()->print_msg(L1, "Assembler '%s' unknown, fallback to non asm version of cryptonight_v8", selected_asm.c_str());
 		}
@@ -773,7 +770,7 @@ void minethd::func_multi_selector(cryptonight_ctx** ctx, minethd::cn_on_new_job&
 		}
 		else
 		{
-			printer::inst()->print_msg(L0, "enable cryptonight_r asm '%s' cpu's", selected_asm.c_str());
+			printer::inst()->print_msg(L0, "enable cryptonight_r asm '%s' cpus", selected_asm.c_str());
 			for(int h = 0; h < N; ++h)
 				ctx[h]->asm_version = selected_asm == "intel_avx" ? 1 : 2; // 1 == Intel; 2 == AMD
 		}
