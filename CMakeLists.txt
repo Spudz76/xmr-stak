@@ -541,13 +541,6 @@ endif()
 target_link_libraries(xmr-stak-c ${LIBS} xmr-stak-asm)
 
 # compile generic backend files
-if(ALGO_CN_GPU_ENABLE)
-    set(ALGO_CN_GPU_CPP
-        "xmrstak/backend/cpu/crypto/cn_gpu_avx.cpp"
-        "xmrstak/backend/cpu/crypto/cn_gpu_ssse3.cpp"
-    )
-endif()
-
 add_library(xmr-stak-backend
     STATIC
     "xmrstak/jconf.cpp"
@@ -558,7 +551,8 @@ add_library(xmr-stak-backend
     "xmrstak/backend/cpu/minethd.cpp"
     "xmrstak/backend/backendConnector.cpp"
     "xmrstak/backend/globalStates.cpp"
-    ${ALGO_CN_GPU_CPP}
+    "xmrstak/backend/cpu/crypto/cn_gpu_avx.cpp"
+    "xmrstak/backend/cpu/crypto/cn_gpu_ssse3.cpp"
     "xmrstak/backend/cpu/crypto/cryptonight_common.cpp"
     "xmrstak/http/httpd.cpp"
     "xmrstak/http/webdesign.cpp"
@@ -570,6 +564,9 @@ add_library(xmr-stak-backend
     "xmrstak/net/jpsock.cpp"
     "xmrstak/net/socket.cpp"
 )
+if(ALGO_CN_GPU_ENABLE)
+    add_definitions(xmr-stak-backend -DALGO_CN_GPU)
+endif()
 target_link_libraries(xmr-stak-backend xmr-stak-c ${CMAKE_DL_LIBS} xmr-stak-asm)
 
 # compile CUDA backend

@@ -1,3 +1,4 @@
+#ifdef ALGO_CN_GPU
 #include "cn_gpu.hpp"
 #include "../../cryptonight.hpp"
 
@@ -179,3 +180,4 @@ void cn_gpu_inner_ssse3(const uint8_t* spad, uint8_t* lpad, const xmrstak_algo& 
 		idx3 = scratchpad_ptr(lpad, n, 3, mask);
 	}
 }
+#endif

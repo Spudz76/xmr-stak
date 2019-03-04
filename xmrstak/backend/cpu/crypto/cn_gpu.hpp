@@ -1,5 +1,6 @@
 #pragma once
 
+#ifdef ALGO_CN_GPU
 #include "xmrstak/backend/cryptonight.hpp"
 #include <stdint.h>
 
@@ -40,3 +41,4 @@ inline bool cngpu_check_avx2()
 void cn_gpu_inner_avx(const uint8_t* spad, uint8_t* lpad, const xmrstak_algo& algo);
 
 void cn_gpu_inner_ssse3(const uint8_t* spad, uint8_t* lpad, const xmrstak_algo& algo);
+#endif

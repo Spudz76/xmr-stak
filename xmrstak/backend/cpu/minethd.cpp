@@ -571,6 +571,7 @@ void minethd::func_multi_selector(minethd::cn_hash_fun& hash_fun, minethd::cn_on
 	case cryptonight_superfast:
 		algv = 11;
 		break;
+#ifdef ALGO_CN_GPU
 	case cryptonight_gpu:
 		algv = 12;
 		break;
@@ -580,6 +581,14 @@ void minethd::func_multi_selector(minethd::cn_hash_fun& hash_fun, minethd::cn_on
 	case cryptonight_r:
 		algv = 14;
 		break;
+#else
+	case cryptonight_conceal:
+		algv = 12;
+		break;
+	case cryptonight_r:
+		algv = 13;
+		break;
+#endif
 	default:
 		algv = 2;
 		break;
@@ -646,11 +655,13 @@ void minethd::func_multi_selector(minethd::cn_hash_fun& hash_fun, minethd::cn_on
 		Cryptonight_hash<N>::template hash<cryptonight_superfast, false, true>,
 		Cryptonight_hash<N>::template hash<cryptonight_superfast, true, true>,
 
+#ifdef ALGO_CN_GPU
 		Cryptonight_hash_gpu::template hash<cryptonight_gpu, false, false>,
 		Cryptonight_hash_gpu::template hash<cryptonight_gpu, true, false>,
 		Cryptonight_hash_gpu::template hash<cryptonight_gpu, false, true>,
 		Cryptonight_hash_gpu::template hash<cryptonight_gpu, true, true>,
 
+#endif
 		Cryptonight_hash<N>::template hash<cryptonight_conceal, false, false>,
 		Cryptonight_hash<N>::template hash<cryptonight_conceal, true, false>,
 		Cryptonight_hash<N>::template hash<cryptonight_conceal, false, true>,

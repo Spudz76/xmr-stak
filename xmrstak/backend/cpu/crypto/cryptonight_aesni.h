@@ -1117,6 +1117,7 @@ struct Cryptonight_hash_asm<2, 0>
 	}
 };
 
+#ifdef ALGO_CN_GPU
 struct Cryptonight_hash_gpu
 {
 	static constexpr size_t N = 1;
@@ -1137,6 +1138,7 @@ struct Cryptonight_hash_gpu
 		memcpy(output, ctx[0]->hash_state, 32);
 	}
 };
+#endif
 
 template<size_t N>
 struct Cryptonight_R_generator
