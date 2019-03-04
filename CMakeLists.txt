@@ -526,11 +526,13 @@ endif()
 set_property(TARGET xmr-stak-asm PROPERTY LINKER_LANGUAGE C)
 
 # compile C files
-file(GLOB SRCFILES_C "xmrstak/backend/cpu/crypto/*.c")
-
 add_library(xmr-stak-c
     STATIC
-    ${SRCFILES_C}
+    "xmrstak/backend/cpu/crypto/c_blake256.c"
+    "xmrstak/backend/cpu/crypto/c_groestl.c"
+    "xmrstak/backend/cpu/crypto/c_jh.c"
+    "xmrstak/backend/cpu/crypto/c_keccak.c"
+    "xmrstak/backend/cpu/crypto/c_skein.c"
 )
 set_property(TARGET xmr-stak-c PROPERTY C_STANDARD 99)
 if(MICROHTTPD_ENABLE)
@@ -539,18 +541,34 @@ endif()
 target_link_libraries(xmr-stak-c ${LIBS} xmr-stak-asm)
 
 # compile generic backend files
-file(GLOB BACKEND_CPP
-    "xmrstak/*.cpp"
-    "xmrstak/backend/cpu/*.cpp"
-    "xmrstak/backend/*.cpp"
-    "xmrstak/backend/cpu/crypto/*.cpp"
-    "xmrstak/http/*.cpp"
-    "xmrstak/misc/*.cpp"
-    "xmrstak/net/*.cpp")
+if(ALGO_CN_GPU_ENABLE)
+    set(ALGO_CN_GPU_CPP
+        "xmrstak/backend/cpu/crypto/cn_gpu_avx.cpp"
+        "xmrstak/backend/cpu/crypto/cn_gpu_ssse3.cpp"
+    )
+endif()
 
 add_library(xmr-stak-backend
     STATIC
-    ${BACKEND_CPP}
+    "xmrstak/jconf.cpp"
+    "xmrstak/version.cpp"
+    "xmrstak/backend/cpu/cpuType.cpp"
+    "xmrstak/backend/cpu/hwlocMemory.cpp"
+    "xmrstak/backend/cpu/jconf.cpp"
+    "xmrstak/backend/cpu/minethd.cpp"
+    "xmrstak/backend/backendConnector.cpp"
+    "xmrstak/backend/globalStates.cpp"
+    ${ALGO_CN_GPU_CPP}
+    "xmrstak/backend/cpu/crypto/cryptonight_common.cpp"
+    "xmrstak/http/httpd.cpp"
+    "xmrstak/http/webdesign.cpp"
+    "xmrstak/misc/console.cpp"
+    "xmrstak/misc/executor.cpp"
+    "xmrstak/misc/telemetry.cpp"
+    "xmrstak/misc/uac.cpp"
+    "xmrstak/misc/utility.cpp"
+    "xmrstak/net/jpsock.cpp"
+    "xmrstak/net/socket.cpp"
 )
 target_link_libraries(xmr-stak-backend xmr-stak-c ${CMAKE_DL_LIBS} xmr-stak-asm)
 
