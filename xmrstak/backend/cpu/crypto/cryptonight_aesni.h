@@ -306,7 +306,11 @@ template<bool SOFT_AES, bool PREFETCH, xmrstak_algo_id ALGO>
 void cn_implode_scratchpad(const __m128i* input, __m128i* output, const xmrstak_algo& algo)
 {
 	constexpr bool HEAVY_MIX = ALGO == cryptonight_heavy || ALGO == cryptonight_haven ||
-		ALGO == cryptonight_bittube2 || ALGO == cryptonight_superfast || ALGO == cryptonight_gpu;
+		ALGO == cryptonight_bittube2 || ALGO == cryptonight_superfast
+#ifdef ALGO_CN_GPU
+		|| ALGO == cryptonight_gpu
+#endif
+;
 
 	// This is more than we have registers, compiler will assign 2 keys on the stack
 	__m128i xout0, xout1, xout2, xout3, xout4, xout5, xout6, xout7;

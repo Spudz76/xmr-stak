@@ -54,7 +54,11 @@ public:
 		configTpl.set( std::string(tpl) );
 
 		// if cryptonight_gpu is used we will disable cpu mining but provide a inactive config
+#ifdef ALGO_CN_GPU
 		bool useCryptonight_gpu = ::jconf::inst()->GetCurrentCoinSelection().GetDescription(1).GetMiningAlgo() == cryptonight_gpu;
+#else
+		bool useCryptonight_gpu = false;
+#endif
 
 		if(useCryptonight_gpu)
 		{

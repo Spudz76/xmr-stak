@@ -50,8 +50,11 @@ public:
 		std::string conf;
 
 		// if cryptonight_gpu is used we will disable cpu mining but provide a inactive config
+#ifdef ALGO_CN_GPU
 		bool useCryptonight_gpu = ::jconf::inst()->GetCurrentCoinSelection().GetDescription(1).GetMiningAlgo() == cryptonight_gpu;
-
+#else
+		bool useCryptonight_gpu = false;
+#endif
 		if(useCryptonight_gpu)
 		{
 			printer::inst()->print_msg(L0, "WARNING: CPU mining will be disabled because cryptonight_gpu is not suitable for CPU mining. You can uncomment the auto generated config in %s to enable CPU mining.", params::inst().configFileCPU.c_str());
