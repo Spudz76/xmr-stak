@@ -304,6 +304,7 @@ void CryptonightR_get_program(std::vector<char>& ptx, std::string& lowered_name,
     case cryptonight_r:
         code_size = v4_random_math_init<cryptonight_r>(code, height);
         break;
+	default:
         printer::inst()->print_msg(LDEBUG, "CryptonightR_get_program: invalid algo %d", algo);
         return;
     }
