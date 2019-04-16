@@ -10,6 +10,8 @@ set(CMAKE_CXX_STANDARD 11)
 if(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
     set(CMAKE_INSTALL_PREFIX "${CMAKE_BINARY_DIR}" CACHE PATH "install prefix" FORCE)
 endif(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
+set(EXECUTABLE_OUTPUT_PATH "bin" CACHE STRING "Path to place executables relative to ${CMAKE_INSTALL_PREFIX}")
+set(LIBRARY_OUTPUT_PATH "bin" CACHE STRING "Path to place libraries relative to ${CMAKE_INSTALL_PREFIX}")
 
 # help to find cuda on systems with a software module system
 list(APPEND CMAKE_PREFIX_PATH "$ENV{CUDA_ROOT}")
@@ -243,8 +245,15 @@ if(CUDA_ENABLE)
             endif()
             foreach(CUDA_ARCH_ELEM ${CUDA_ARCH})
                 # set flags to create device code for the given architecture
-                set(CUDA_NVCC_FLAGS ${CUDA_NVCC_FLAGS}
-                    "--generate-code arch=compute_${CUDA_ARCH_ELEM},code=sm_${CUDA_ARCH_ELEM} --generate-code arch=compute_${CUDA_ARCH_ELEM},code=compute_${CUDA_ARCH_ELEM}")
+                if("${CUDA_ARCH_ELEM}" STREQUAL "21")
+                    # "2.1" actually does run faster when compiled as itself, versus in "2.0" compatible mode
+                    # strange virtual code type on top of compute_20, with no compute_21 (so the normal rule fails)
+                    set(CUDA_NVCC_FLAGS ${CUDA_NVCC_FLAGS}
+                        "--generate-code arch=compute_20,code=sm_21")
+                else()
+                    set(CUDA_NVCC_FLAGS ${CUDA_NVCC_FLAGS}
+                        "--generate-code arch=compute_${CUDA_ARCH_ELEM},code=sm_${CUDA_ARCH_ELEM} --generate-code arch=compute_${CUDA_ARCH_ELEM},code=compute_${CUDA_ARCH_ELEM}")
+                endif()
             endforeach()
 
             # give each thread an independent default stream
@@ -456,6 +465,7 @@ if(HWLOC_ENABLE)
     if(HWLOC STREQUAL "HWLOC-NOTFOUND" OR ${HWLOC_INCLUDE_DIR} STREQUAL "HWLOC_INCLUDE_DIR-NOTFOUND")
         message(FATAL_ERROR "hwloc NOT found: use `-DHWLOC_ENABLE=OFF` to build without hwloc support")
     else()
+        set(HWLOC_FOUND TRUE)
         set(LIBS ${LIBS} ${HWLOC})
         include_directories(AFTER ${HWLOC_INCLUDE_DIR})
     endif()
@@ -670,6 +680,15 @@ if(CUDA_FOUND)
         endif()
     else()
         set(CUDA_LIBRARIES ${CUDA_LIBRARIES} ${CUDA_NVRTC_LIB})
+        if(WIN32)
+            file(GLOB NVRTCDLL "${CUDA_TOOLKIT_ROOT_DIR}/bin/nvrtc64*.dll")
+            add_custom_command(TARGET ${XMRSTAK_CUDA_BACKEND} POST_BUILD
+                COMMAND ${CMAKE_COMMAND} -E copy_if_different "${NVRTCDLL}" "${CMAKE_INSTALL_PREFIX}/${LIBRARY_OUTPUT_PATH}")
+
+            file(GLOB NVRTCBUILTINDLL "${CUDA_TOOLKIT_ROOT_DIR}/bin/nvrtc-builtins64*.dll")
+            add_custom_command(TARGET ${XMRSTAK_CUDA_BACKEND} POST_BUILD
+                COMMAND ${CMAKE_COMMAND} -E copy_if_different "${NVRTCBUILTINDLL}" "${CMAKE_INSTALL_PREFIX}/${LIBRARY_OUTPUT_PATH}")
+        endif()
     endif()
     
     target_link_libraries(${XMRSTAK_CUDA_BACKEND} ${CUDA_LIBRARIES})
@@ -704,10 +723,24 @@ if(CMAKE_CXX_COMPILER_ID MATCHES "MSVC")
 endif()
 add_executable(xmr-stak ${SRCFILES_CPP})
 
-set(EXECUTABLE_OUTPUT_PATH "bin" CACHE STRING "Path to place executables relative to ${CMAKE_INSTALL_PREFIX}")
-set(LIBRARY_OUTPUT_PATH "bin" CACHE STRING "Path to place libraries relative to ${CMAKE_INSTALL_PREFIX}")
-
 target_link_libraries(xmr-stak ${LIBS} xmr-stak-c xmr-stak-backend xmr-stak-asm)
+if(WIN32)
+    if(OPENSSL_FOUND)
+        file(GLOB OPENSSLDLLS "${OPENSSL_INCLUDE_DIR}/../bin/[ls][is][bl]*.dll")
+        add_custom_command(TARGET xmr-stak POST_BUILD
+            COMMAND ${CMAKE_COMMAND} -E copy_if_different
+            ${OPENSSLDLLS}
+            "${CMAKE_INSTALL_PREFIX}/${LIBRARY_OUTPUT_PATH}")
+    endif()
+    if(HWLOC_FOUND)
+        file(GLOB HWLOCDLLS "${HWLOC_INCLUDE_DIR}/../bin/*.dll")
+        add_custom_command(TARGET xmr-stak POST_BUILD
+            COMMAND ${CMAKE_COMMAND} -E copy_if_different
+            ${HWLOCDLLS}
+            "${CMAKE_INSTALL_PREFIX}/${LIBRARY_OUTPUT_PATH}")
+    endif()
+endif()
+
 
 ################################################################################
 # Install
